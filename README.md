@@ -5,6 +5,20 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
 
 ```
+-- Создать базу данных
+CREATE DATABASE flussonic_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Создать пользователя и задать пароль
+CREATE USER 'flussonic'@'localhost' IDENTIFIED BY 'z1t89e5g7wq3msr6v2n0xdkf4lujabci';
+
+-- Выдать все права на базу данных
+GRANT ALL PRIVILEGES ON flussonic_db.* TO 'flussonic'@'localhost';
+
+-- Обновить привилегии
+FLUSH PRIVILEGES;
+
+
+
 -- 1. Таблица addresses
 CREATE TABLE addresses (
 id INT AUTO_INCREMENT PRIMARY KEY,

@@ -1,20 +1,23 @@
-// server/server.js
-import express from 'express'
-import cors from 'cors'
+import express from 'express';
+import dotenv from 'dotenv';
+import addressesRouter from './routes/addresses.js';
+import dvrRoutes from './routes/dvr.js';
 
-const app = express()
+import cors from 'cors';
 
-// Разрешаем запросы с фронтенда (localhost:5173)
-app.use(cors({
-    origin: 'http://localhost:5173',  // Фронтенд-адрес
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Разрешаем HTTP-методы
-    allowedHeaders: ['Content-Type', 'Authorization'],  // Разрешаем нужные заголовки
-}))
+const app = express();
+dotenv.config();
 
-app.get('/api/me', (req, res) => {
-    res.json({ message: 'Пользователь', user: req.user })
-})
+app.use(cors());
+app.use(express.json());
 
-app.listen(5000, () => {
-    console.log('Сервер работает на http://localhost:5000')
-})
+// Роут для адресов
+app.use('/api/addresses', addressesRouter);
+app.use('/api/dvr', dvrRoutes);
+
+// Запуск сервера
+const PORT = process.env.PORT || 3000;
+console.log(`🚀 PORT .ENV :${process.env.PORT}`);
+app.listen(PORT, () => {
+    console.log(`🚀 Сервер запущен на http://localhost:${PORT}`);
+});
