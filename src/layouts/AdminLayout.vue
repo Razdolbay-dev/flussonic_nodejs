@@ -1,5 +1,10 @@
 <script setup>
+import { useAuthStore } from '@/store/auth'
+const store = useAuthStore()
 
+function logout() {
+  store.logout()
+}
 </script>
 
 <template>
@@ -8,6 +13,7 @@
     <main class="flex-1 p-6">
       <slot />
     </main>
+    <button @click="logout" class="text-red-500">Выйти</button>
   </div>
 </template>
 
