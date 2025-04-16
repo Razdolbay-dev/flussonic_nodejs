@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-semibold">DVR</h1>
       <button
-          @click="isModalOpen = true"
+          @click="openAddModal"
           class="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
       >
         Добавить DVR
@@ -33,6 +33,21 @@
             ({{ dvr.stats.usagePercent }}%)
           </p>
         </div>
+
+        <div class="flex justify-between items-center mt-4 text-sm">
+          <button
+              @click="openEditModal(dvr)"
+              class="text-blue-600 hover:underline"
+          >
+            Редактировать
+          </button>
+          <button
+              @click="handleDelete(dvr.id)"
+              class="text-red-600 hover:underline"
+          >
+            Удалить
+          </button>
+        </div>
       </div>
     </div>
 
@@ -43,8 +58,10 @@
           class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       >
         <div class="bg-white p-6 rounded-xl w-full max-w-md animate-fade-in">
-          <h2 class="text-xl font-semibold mb-4">Добавить DVR</h2>
-          <form @submit.prevent="handleAdd" class="space-y-3">
+          <h2 class="text-xl font-semibold mb-4">
+            {{ isEditMode ? 'Редактировать DVR' : 'Добавить DVR' }}
+          </h2>
+          <form @submit.prevent="isEditMode ? handleUpdate() : handleAdd()" class="space-y-3">
             <input
                 v-model="form.name"
                 placeholder="Имя"
@@ -58,14 +75,14 @@
                 required
             />
             <div class="flex justify-end gap-2 mt-4">
-              <button type="button" @click="isModalOpen = false" class="px-4 py-2 rounded border">
+              <button type="button" @click="closeModal" class="px-4 py-2 rounded border">
                 Отмена
               </button>
               <button
                   type="submit"
                   class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
               >
-                Добавить
+                {{ isEditMode ? 'Сохранить' : 'Добавить' }}
               </button>
             </div>
           </form>
@@ -87,17 +104,35 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
-import { getDvrs, addDvr, getDvrStats } from '@/api/dvr.js'
+import { getDvrs, addDvr, getDvrStats, updateDvr, deleteDvr } from '@/api/dvr.js'
 
 const dvrList = ref([])
 const isModalOpen = ref(false)
+const isEditMode = ref(false)
 const toast = ref(null)
 
 const form = ref({
+  id: null,
   name: '',
   path: '',
 })
+
+const openAddModal = () => {
+  form.value = { id: null, name: '', path: '' }
+  isEditMode.value = false
+  isModalOpen.value = true
+}
+
+const openEditModal = (dvr) => {
+  form.value = { ...dvr }
+  isEditMode.value = true
+  isModalOpen.value = true
+}
+
+const closeModal = () => {
+  isModalOpen.value = false
+  form.value = { id: null, name: '', path: '' }
+}
 
 const loadDvr = async () => {
   try {
@@ -108,11 +143,11 @@ const loadDvr = async () => {
       try {
         const res = await getDvrStats(dvr.path)
         dvr.stats = res.data
-      } catch (e) {
+      } catch {
         dvr.stats = null
       }
     }
-  } catch (e) {
+  } catch {
     showToast('Ошибка загрузки DVR')
   }
 }
@@ -121,15 +156,38 @@ const handleAdd = async () => {
   try {
     const { data } = await addDvr(form.value)
     dvrList.value.unshift({ ...data, stats: null })
-    isModalOpen.value = false
-    showToast('DVR успешно добавлен')
-    form.value = { name: '', path: '' }
+    closeModal()
+    showToast('DVR добавлен')
     await loadDvr()
-  } catch (e) {
+  } catch {
     showToast('Ошибка при добавлении DVR')
   }
 }
 
+const handleUpdate = async () => {
+  try {
+    await updateDvr(form.value.id, {
+      name: form.value.name,
+      path: form.value.path,
+    })
+    closeModal()
+    showToast('DVR обновлён')
+    await loadDvr()
+  } catch {
+    showToast('Ошибка при обновлении DVR')
+  }
+}
+
+const handleDelete = async (id) => {
+  if (!confirm('Вы действительно хотите удалить этот DVR?')) return
+  try {
+    await deleteDvr(id)
+    showToast('DVR удалён')
+    await loadDvr()
+  } catch {
+    showToast('Ошибка при удалении DVR')
+  }
+}
 
 const showToast = (msg) => {
   toast.value = msg

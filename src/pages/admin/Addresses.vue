@@ -1,10 +1,12 @@
 <template>
   <div class="mx-auto text-center p-8">
-    <h1 class="container mx-auto text-2xl font-bold mb-4">Адреса</h1>
-    <!-- Кнопка для открытия модального окна -->
-    <button @click="openModal" class="flex left-0 bg-blue-600 text-white px-4 py-2 rounded-xl mb-4">
-      Добавить адрес
-    </button>
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-semibold">Адреса</h1>
+      <!-- Кнопка для открытия модального окна -->
+      <button @click="openModal" class="flex left-0 bg-blue-600 text-white px-4 py-2 rounded-xl mb-4">
+        Добавить адрес
+      </button>
+    </div>
 
     <!-- Модальное окно с transition -->
     <transition name="modal-fade">

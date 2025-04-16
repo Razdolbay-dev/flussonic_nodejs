@@ -77,20 +77,21 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// Получить статистику: размер и доступное место
+// Получить быструю статистику диска по пути DVR
 router.get('/stats', async (req, res) => {
     const dvrPath = req.query.path;
-    if (!dvrPath) return res.status(400).json({ error: 'Параметр path обязателен' });
+    if (!dvrPath) {
+        return res.status(400).json({ error: 'Параметр path обязателен' });
+    }
 
     try {
-        await fs.access(dvrPath); // Проверка существования
+        await fs.access(dvrPath); // Проверка существования каталога
 
-        const { stdout } = await execAsync(`du -sb "${dvrPath}" && df -B1 "${dvrPath}"`);
-        const [duLine, ...dfLines] = stdout.trim().split('\n');
+        const { stdout } = await execAsync(`df -B1 "${dvrPath}"`);
+        const dfStats = stdout.trim().split('\n').pop().split(/\s+/);
 
-        const used = parseInt(duLine.split('\t')[0]);
-        const dfStats = dfLines[dfLines.length - 1].split(/\s+/);
         const total = parseInt(dfStats[1]);
+        const used = parseInt(dfStats[2]);
         const available = parseInt(dfStats[3]);
 
         res.json({
@@ -104,5 +105,6 @@ router.get('/stats', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при получении данных диска' });
     }
 });
+
 
 export default router;
