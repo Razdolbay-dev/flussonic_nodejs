@@ -62,7 +62,6 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-
 // Удалить DVR
 router.delete('/:id', async (req, res) => {
     try {
@@ -105,6 +104,5 @@ router.get('/stats', async (req, res) => {
         res.status(500).json({ error: 'Ошибка при получении данных диска' });
     }
 });
-
 
 export default router;
