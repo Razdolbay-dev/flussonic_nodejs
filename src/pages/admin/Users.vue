@@ -18,9 +18,9 @@
       >
         <div>
           <h2 class="font-bold text-lg">{{ user.name }}</h2>
+          <p class="text-xs text-gray-400">ID: {{ user.id }}</p>
           <p class="text-sm text-gray-600">IP: {{ user.ip }}</p>
           <p class="text-sm text-gray-600">Адрес: {{ user.address_name || '—' }}</p>
-          <p class="text-xs text-gray-400">ID: {{ user.id }}</p>
         </div>
 
         <div class="flex justify-end mt-4 gap-2">
