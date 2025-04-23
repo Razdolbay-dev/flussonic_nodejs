@@ -72,6 +72,17 @@ FOREIGN KEY (client_id) REFERENCES clients_tmp(id) ON DELETE CASCADE,
 FOREIGN KEY (webcam_id) REFERENCES webcam(id) ON DELETE CASCADE
 );
 
+-- 4.2 Таблица соответствия временных клиентов и адресов
+CREATE TABLE clients_tmp_addresses (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  client_id INT,
+  address_id INT,
+  access_until DATETIME,
+  FOREIGN KEY (client_id) REFERENCES clients_tmp(id) ON DELETE CASCADE,
+  FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE CASCADE
+);
+
+
 -- 5. Таблица users (постоянные клиенты)
 CREATE TABLE users (
 id INT AUTO_INCREMENT PRIMARY KEY,
