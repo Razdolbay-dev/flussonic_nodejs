@@ -37,14 +37,12 @@ path TEXT
 -- 3. Таблица webcam
 CREATE TABLE webcam (
 id INT AUTO_INCREMENT PRIMARY KEY,
-name VARCHAR(100),
-title VARCHAR(100),
-description TEXT,
-url TEXT,
+uid VARCHAR(100) UNIQUE NOT NULL ,
+name VARCHAR(100) NOT NULL ,      
+url TEXT NOT NULL ,               
 dvr_id INT,
-preset VARCHAR(100),
 address_id INT,
-role ENUM('public', 'private') DEFAULT 'private',
+role ENUM('public', 'private') DEFAULT 'public',
 day_count INT DEFAULT 0,
 FOREIGN KEY (dvr_id) REFERENCES dvr(id),
 FOREIGN KEY (address_id) REFERENCES addresses(id)
@@ -62,17 +60,7 @@ created DATETIME DEFAULT CURRENT_TIMESTAMP,
 deleted DATETIME
 );
 
--- 4.1 Таблица соответствия клиентов и камер (временный доступ)
-CREATE TABLE clients_tmp_webcams (
-id INT AUTO_INCREMENT PRIMARY KEY,
-client_id INT,
-webcam_id INT,
-access_until DATETIME,
-FOREIGN KEY (client_id) REFERENCES clients_tmp(id) ON DELETE CASCADE,
-FOREIGN KEY (webcam_id) REFERENCES webcam(id) ON DELETE CASCADE
-);
-
--- 4.2 Таблица соответствия временных клиентов и адресов
+-- 4.1 Таблица соответствия временных клиентов и адресов
 CREATE TABLE clients_tmp_addresses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   client_id INT,
@@ -81,7 +69,6 @@ CREATE TABLE clients_tmp_addresses (
   FOREIGN KEY (client_id) REFERENCES clients_tmp(id) ON DELETE CASCADE,
   FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE CASCADE
 );
-
 
 -- 5. Таблица users (постоянные клиенты)
 CREATE TABLE users (
@@ -99,7 +86,9 @@ FOREIGN KEY (address_id) REFERENCES addresses(id)
 CREATE TABLE settings (
 id INT AUTO_INCREMENT PRIMARY KEY,
 title VARCHAR(100),
-cdn_url TEXT
+cdn_url TEXT DEFAULT 'http://localhost:8888',
+pubt VARCHAR(255),
+privt VARCHAR(255)
 );
 
 ```

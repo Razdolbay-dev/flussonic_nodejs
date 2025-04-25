@@ -5,6 +5,7 @@ import addressesRouter from './routes/addresses.js';
 import dvrRoutes from './routes/dvr.js';
 import usersRouter from './routes/users.js';
 import clientsTmpRouter from "./routes/clientsTmp.js";
+import webcamsRouter from './routes/webcams.js';
 
 const app = express();
 dotenv.config();
@@ -17,6 +18,7 @@ app.use('/api/addresses', addressesRouter);
 app.use('/api/dvr', dvrRoutes);
 app.use('/api/users', usersRouter);
 app.use('/api/clients_tmp', clientsTmpRouter);
+app.use('/api/webcams', webcamsRouter);
 
 // Запуск сервера
 const PORT = process.env.PORT || 3000;
