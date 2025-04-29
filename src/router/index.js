@@ -16,6 +16,7 @@ import TempClients from '@/pages/admin/CTmp.vue'
 import Users from '@/pages/admin/Users.vue'
 import Settings from '@/pages/admin/Settings.vue'
 import NotFound from '@/pages/admin/NotFound.vue'
+import WebcamDetail from '@/components/WebcamDetail.vue'
 
 
 const routes = [
@@ -35,6 +36,7 @@ const routes = [
         children: [
             { path: 'dashboard', name: 'Dashboard', component: Dashboard },
             { path: 'webcams', name: 'Webcams', component: Webcams },
+            { path: '/webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
             { path: 'addresses', name: 'Addresses', component: Addresses },
             { path: 'dvrs', name: 'Dvrs', component: Dvrs },
             { path: 'temp-clients', name: 'TempClients', component: TempClients },

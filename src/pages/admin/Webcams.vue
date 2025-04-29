@@ -7,6 +7,15 @@
       </button>
     </div>
 
+    <!-- В Webcams.vue -->
+    <select v-model="selectedAddressId" @change="loadWebcams" class="border p-2 rounded mb-4">
+      <option value="">Все адреса</option>
+      <option v-for="address in addresses" :key="address.id" :value="address.id">
+        {{ address.city }}, {{ address.street }} {{ address.house_number }}
+      </option>
+    </select>
+
+
     <!-- Сетка камер -->
     <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <div
@@ -15,11 +24,18 @@
           class="border p-4 rounded-lg shadow bg-white flex flex-col justify-between"
       >
         <div>
-          <h2 class="font-bold text-lg mb-1">{{ cam.name }}</h2>
-          <p class="text-sm text-gray-600 mb-1">URL: <span class="break-all">{{ cam.url }}</span></p>
-          <p class="text-sm text-gray-600">UID: {{ cam.uid }}</p>
-          <p class="text-sm text-gray-600">Роль: {{ cam.role }}</p>
+          <h2 class="font-bold text-lg mb-1">
+            <router-link :to="`/webcams/${cam.id}`" class="text-blue-600 hover:underline">
+              {{ cam.name }}
+            </router-link>
+          </h2>
+
           <p class="text-sm text-gray-600">Хранение: {{ formatDayCount(cam.day_count) }}</p>
+          <p class="text-sm text-gray-600">
+            Адрес:
+            {{ cam.city }}, {{ cam.street }} {{ cam.house_number }}
+          </p>
+
         </div>
         <div class="mt-4 flex justify-between gap-2">
           <button @click="openModal(cam)" class="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
@@ -113,13 +129,19 @@ const dvrs = ref([])
 const isModalOpen = ref(false)
 const editingCam = ref(null)
 
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalItems = ref(0);
+
+const selectedAddressId = ref('');
+
 const form = reactive({
   uid: '',
   name: '',
   url: '',
   dvr_id: '',
   address_id: '',
-  role: 'private',
+  role: 'public',
   day_count: 0
 })
 
@@ -140,9 +162,19 @@ const formatDayCount = (seconds) => {
 }
 
 const loadWebcams = async () => {
-  const { data } = await getWebcams()
-  webcams.value = data
-}
+  const params = {
+    page: currentPage.value,
+    limit: pageSize.value,
+  };
+  if (selectedAddressId.value) {
+    params.address_id = selectedAddressId.value;
+  }
+
+  const { data } = await getWebcams(params);
+  webcams.value = data.items;
+  totalItems.value = data.total;
+};
+
 const generateUid = () => {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
   let result = ''
@@ -162,7 +194,7 @@ const openModal = (cam = null) => {
   form.url = cam?.url || ''
   form.dvr_id = cam?.dvr_id || ''
   form.address_id = cam?.address_id || ''
-  form.role = cam?.role || 'private'
+  form.role = cam?.role || 'public'
   form.day_count = cam?.day_count || 0
 }
 
@@ -182,6 +214,23 @@ const deleteCam = async (id) => {
     await loadWebcams()
   }
 }
+
+// методы для переключения страниц
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+    loadWebcams();
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value * pageSize.value < totalItems.value) {
+    currentPage.value++;
+    loadWebcams();
+  }
+};
+
 
 onMounted(async () => {
   await Promise.all([

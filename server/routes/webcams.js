@@ -7,32 +7,74 @@ import axios from 'axios'
 const router = express.Router()
 
 // Получить все камеры
+// GET /api/webcams
 router.get('/', async (req, res) => {
-    const { address_id } = req.query
+    const { address_id, page = 1, limit = 10 } = req.query
+
+    const offset = (parseInt(page) - 1) * parseInt(limit)
+    const params = []
+    let whereClause = ''
+
+    if (address_id) {
+        whereClause = 'WHERE w.address_id = ?'
+        params.push(address_id)
+    }
 
     try {
-        let sql = `
+        const sql = `
             SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
             FROM webcam w
                      LEFT JOIN dvr d ON w.dvr_id = d.id
                      LEFT JOIN addresses a ON w.address_id = a.id
+                ${whereClause}
+            ORDER BY w.id DESC
+                LIMIT ? OFFSET ?
         `
-        const params = []
+        params.push(parseInt(limit), offset)
 
-        if (address_id) {
-            sql += ' WHERE w.address_id = ?'
-            params.push(address_id)
-        }
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM webcam w
+                     LEFT JOIN dvr d ON w.dvr_id = d.id
+                     LEFT JOIN addresses a ON w.address_id = a.id
+                ${whereClause}
+        `
 
-        sql += ' ORDER BY w.id DESC'
-
+        const [[countRow]] = await db.query(countSql, address_id ? [address_id] : [])
         const [cams] = await db.query(sql, params)
-        res.json(cams)
+
+        res.json({
+            items: cams,
+            total: countRow.total
+        })
     } catch (err) {
-        console.error('Ошибка при получении камер:', err)
+        console.error('Ошибка при получении камер с пагинацией:', err)
         res.status(500).json({ error: 'Ошибка сервера' })
     }
 })
+
+// Получить одну камеру
+// GET /api/webcams/:id
+router.get('/:id', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+      SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
+      FROM webcam w
+      LEFT JOIN dvr d ON w.dvr_id = d.id
+      LEFT JOIN addresses a ON w.address_id = a.id
+      WHERE w.id = ?
+    `, [req.params.id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Камера не найдена' });
+        }
+
+        res.json(rows[0]);
+    } catch (err) {
+        console.error('Ошибка при получении камеры:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
 
 // Получить одну камеру
 router.get('/:id', async (req, res) => {
