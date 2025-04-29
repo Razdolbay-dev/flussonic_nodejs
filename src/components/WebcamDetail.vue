@@ -1,8 +1,8 @@
 <template>
-  <div class="p-6">
+  <div class="p-6 container mx-auto">
     <h1 class="text-2xl font-semibold mb-4">Камера: {{ webcam.name }}</h1>
 
-    <div v-if="webcam.uid" class="relative w-full" style="padding-top: 56.25%;">
+    <div v-if="webcam.uid" class="relative w-full pt-[100%] sm:pt-[60%]">
       <iframe
           :src="`http://192.168.1.76:8888/${webcam.uid}/embed.html?autoplay=false&dvr=true`"
           allowfullscreen

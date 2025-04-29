@@ -33,9 +33,9 @@ const toggleMenu = () => {
 
         <!-- Меню (PC: всегда видно, Mobile: скрыто) -->
         <div class="hidden md:flex space-x-6 ">
-          <router-link class="p-2 hover:text-blue-600 hover:underline" to="/">Публичные</router-link>
-          <router-link class="p-2 hover:text-blue-500 hover:underline" to="/yard">Дворовые</router-link>
-          <router-link class="p-2 hidden hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
+          <router-link class="py-2 hover:text-blue-600 hover:underline" to="/">Публичные</router-link>
+          <router-link class="py-2 hover:text-blue-500 hover:underline" to="/yard">Дворовые</router-link>
+          <router-link class="py-2 hidden hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
           <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
         </div>
       </div>

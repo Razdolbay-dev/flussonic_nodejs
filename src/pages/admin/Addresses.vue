@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto text-center p-8">
+  <div class="container mx-auto text-center p-8">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-semibold">Адреса</h1>
       <!-- Кнопка для открытия модального окна -->

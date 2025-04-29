@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6">
+  <div class="p-6 container mx-auto">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-semibold">DVR</h1>
       <button
