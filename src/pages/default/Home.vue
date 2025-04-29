@@ -20,8 +20,8 @@ const loadWebcams = async () => {
   }
 
   const { data } = await getWebcams(params)
-  webcams.value = data.items
-  totalItems.value = data.total
+  webcams.value = data.items.filter(cam => cam.role === 'public');
+  totalItems.value = webcams.value.length;
 
   // Инициализация состояний отображения потоков
   webcams.value.forEach((cam) => {

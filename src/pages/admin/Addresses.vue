@@ -129,7 +129,7 @@ const editingId = ref(null)
 const search = ref('')
 const sortBy = ref('')
 const currentPage = ref(1)
-const itemsPerPage = 5
+const itemsPerPage = 10
 const isModalOpen = ref(false) // Состояние модального окна
 const toast = ref({ visible: false, message: '', type: '' }) // type = 'success' | 'error'
 
