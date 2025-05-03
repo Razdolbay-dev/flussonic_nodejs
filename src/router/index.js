@@ -16,11 +16,12 @@ import Dashboard from '@/pages/admin/Dashboard.vue'
 import Webcams from '@/pages/admin/Webcams.vue'
 import Addresses from '@/pages/admin/Addresses.vue'
 import Dvrs from '@/pages/admin/Dvrs.vue'
-import TempClients from '@/pages/admin/CTmp.vue'
+import TempClients from '@/pages/admin/ClientsTmp.vue'
 import Users from '@/pages/admin/Users.vue'
 import Settings from '@/pages/admin/Settings.vue'
 import NotFound from '@/pages/admin/NotFound.vue'
 import WebcamDetail from '@/components/WebcamDetail.vue'
+import TmpRegister from '@/pages/TmpRegister.vue'
 
 const routes = [
     { path: '/login', component: LoginView },
@@ -31,7 +32,9 @@ const routes = [
             { path: '', name: 'Home', component: Home },
             { path: 'about', name: 'About', component: About },
             { path: 'yard', name: 'Yard', component: Yard },
-            { path: 'allcams', name: 'AllWebCams', component: AllWebCams },
+            { path: 'allcams', name: 'AllWebCams', component: AllWebCams, meta: { requiresPrivileged: true }, },
+            { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
+            { path: 'register', name: 'TmpRegister', component: TmpRegister },
         ],
     },
     {
@@ -42,7 +45,6 @@ const routes = [
             { path: '', redirect: '/admin/dashboard' },
             { path: 'dashboard', name: 'Dashboard', component: Dashboard },
             { path: 'webcams', name: 'Webcams', component: Webcams },
-            { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
             { path: 'addresses', name: 'Addresses', component: Addresses },
             { path: 'dvrs', name: 'Dvrs', component: Dvrs },
             { path: 'temp-clients', name: 'TempClients', component: TempClients },
@@ -68,6 +70,12 @@ router.beforeEach((to, from, next) => {
     if (to.meta.requiresAdmin) {
         if (!token || role === 'user') {
             return next('/')
+        }
+    }
+
+    if (to.meta.requiresPrivileged) {
+        if (!store.token || store.role === 'user') {
+            return next('/') // redirect на главную
         }
     }
 

@@ -1,12 +1,47 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
+
     <div class="bg-white p-6 rounded-lg shadow-md w-96">
-      <h2 class="text-2xl font-bold text-center mb-4">Вход в админ-панель</h2>
-      <form @submit.prevent="login">
+      <div class="flex mb-4 border-b">
+        <button
+            @click="activeTab = 'login'"
+            :class="[
+            'flex-1 text-center py-2',
+            activeTab === 'login' ? 'border-b-2 border-blue-500 font-semibold' : 'text-gray-500'
+          ]"
+        >
+          По логину
+        </button>
+        <button
+            @click="activeTab = 'temp'"
+            :class="[
+            'flex-1 text-center py-2',
+            activeTab === 'temp' ? 'border-b-2 border-blue-500 font-semibold' : 'text-gray-500'
+          ]"
+        >
+          Временный доступ
+        </button>
+
+      </div>
+
+      <h2 class="text-xl font-bold text-center mb-4">
+        {{ activeTab === 'login' ? 'Вход в админ-панель' : 'Временный вход' }}
+      </h2>
+
+
+      <form @submit.prevent="activeTab === 'login' ? loginByName() : loginByPhone()">
         <input
+            v-if="activeTab === 'login'"
             v-model="name"
             type="text"
             placeholder="Логин"
+            class="w-full p-2 border rounded mb-2"
+        />
+        <input
+            v-if="activeTab === 'temp'"
+            v-model="phone"
+            type="text"
+            placeholder="Телефон"
             class="w-full p-2 border rounded mb-2"
         />
         <input
@@ -22,8 +57,12 @@
           Войти
         </button>
       </form>
+
       <p v-if="error" class="text-red-500 text-center mt-2">{{ error }}</p>
+      <a class="text-center pt-5 text-blue-500 hover:text-blue-800 " href="/register"> Как получить временный доступ ? </a>
+
     </div>
+
   </div>
 </template>
 
@@ -36,30 +75,43 @@ import axios from 'axios'
 const store = useAuthStore()
 const router = useRouter()
 
+const activeTab = ref('login') // 'login' или 'temp'
+
 const name = ref('')
+const phone = ref('')
 const password = ref('')
 const error = ref('')
 
-const login = async () => {
+const loginByName = async () => {
   try {
     const res = await axios.post('http://localhost:3000/api/auth/login', {
       name: name.value,
       password: password.value
     })
 
-    // Сохраняем в хранилище (Pinia), не напрямую в localStorage
     store.setAuth(res.data.token, res.data.role)
 
-    // Перенаправление
     if (res.data.role !== 'user') {
       router.push('/admin')
     } else {
       router.push('/')
     }
-
   } catch (e) {
     error.value = e.response?.data?.message || 'Ошибка авторизации'
   }
 }
 
+const loginByPhone = async () => {
+  try {
+    const res = await axios.post('http://localhost:3000/api/auth/tmp-login', {
+      phone: phone.value,
+      password: password.value
+    })
+
+    store.setAuth(res.data.token, 'user')
+    router.push('/')
+  } catch (e) {
+    error.value = e.response?.data?.message || 'Ошибка временного входа'
+  }
+}
 </script>
