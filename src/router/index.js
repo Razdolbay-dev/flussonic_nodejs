@@ -9,6 +9,8 @@ import Home from '@/pages/default/Home.vue'
 import About from '@/pages/default/About.vue'
 import Yard from '@/pages/default/Yard.vue'
 import LoginView from '@/pages/Login.vue'
+import AllWebCams from '@/pages/default/AllWebCams.vue'
+
 
 import Dashboard from '@/pages/admin/Dashboard.vue'
 import Webcams from '@/pages/admin/Webcams.vue'
@@ -29,6 +31,7 @@ const routes = [
             { path: '', name: 'Home', component: Home },
             { path: 'about', name: 'About', component: About },
             { path: 'yard', name: 'Yard', component: Yard },
+            { path: 'allcams', name: 'AllWebCams', component: AllWebCams },
         ],
     },
     {
