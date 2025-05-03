@@ -1,4 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/store/auth'
+import { createPinia } from 'pinia'
 
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
@@ -18,6 +20,7 @@ import Settings from '@/pages/admin/Settings.vue'
 import NotFound from '@/pages/admin/NotFound.vue'
 import WebcamDetail from '@/components/WebcamDetail.vue'
 
+const pinia = createPinia() // 👈 нужно для использования store в guard
 
 const routes = [
     { path: '/login', component: LoginView },
@@ -33,15 +36,17 @@ const routes = [
     {
         path: '/admin',
         component: AdminLayout,
+        meta: { requiresAdmin: true }, // 👈 Добавим мета-флаг
         children: [
             { path: 'dashboard', name: 'Dashboard', component: Dashboard },
             { path: 'webcams', name: 'Webcams', component: Webcams },
-            { path: '/webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
+            { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
             { path: 'addresses', name: 'Addresses', component: Addresses },
             { path: 'dvrs', name: 'Dvrs', component: Dvrs },
             { path: 'temp-clients', name: 'TempClients', component: TempClients },
             { path: 'users', name: 'Users', component: Users },
             { path: 'settings', name: 'Settings', component: Settings },
+            { path: '', redirect: '/admin/dashboard' },
             { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFound }
         ],
     },
@@ -50,6 +55,25 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes,
+})
+
+router.beforeEach((to, from, next) => {
+    const auth = useAuthStore()
+    const isAdminRoute = to.path.startsWith('/admin')
+    const store = useAuthStore(pinia)
+
+
+    // 🚫 Запрет для уже авторизованных на /login
+    if (to.path === '/login' && auth.token) {
+        return next('/admin')
+    }
+
+    // 🔒 Защита /admin
+    if (isAdminRoute && !auth.token) {
+        return next('/login')
+    }
+
+    next()
 })
 
 export default router

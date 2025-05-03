@@ -1,12 +1,19 @@
 <script setup>
 import { ref } from 'vue';
+import { useAuthStore } from '@/store/auth'
 
-const isOpen = ref(false);
+const store = useAuthStore()
+const isOpen = ref(false)
 
 const toggleMenu = () => {
-  isOpen.value = !isOpen.value;
-};
+  isOpen.value = !isOpen.value
+}
+
+function logout() {
+  store.logout()
+}
 </script>
+
 
 <template>
   <div class="bg-gray-100 min-h-screen flex flex-col items-center ">
@@ -31,22 +38,26 @@ const toggleMenu = () => {
           </svg>
         </button>
 
-        <!-- Меню (PC: всегда видно, Mobile: скрыто) -->
-        <div class="hidden md:flex space-x-6 ">
+        <!-- ПК-версия -->
+        <div class="hidden md:flex space-x-6">
           <router-link class="py-2 hover:text-blue-600 hover:underline" to="/">Публичные</router-link>
           <router-link class="py-2 hover:text-blue-500 hover:underline" to="/yard">Дворовые</router-link>
-          <router-link class="py-2 hidden hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
-          <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
+          <router-link v-if="store.token" class="py-2 hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
+          <router-link v-if="!store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
+          <button v-if="store.token" @click="logout" class="text-red-500 hover:bg-gray-200 rounded-md p-2">Выйти</button>
         </div>
+
       </div>
 
-      <!-- Выпадающее меню на мобильной версии -->
+      <!-- Мобильная версия -->
       <div v-if="isOpen" class="md:hidden mt-4 space-y-2 text-center bg-white rounded-md">
         <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/">Публичные</router-link>
-        <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/">Дворовые</router-link>
-        <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin">Управление</router-link>
-        <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
+        <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/yard">Дворовые</router-link>
+        <router-link v-if="store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin">Управление</router-link>
+        <router-link v-if="!store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
+        <button v-if="store.token" @click="logout" class="block p-2 text-red-500 hover:bg-gray-200 rounded-md">Выйти</button>
       </div>
+
     </nav>
 
     <router-view/>

@@ -17,8 +17,11 @@
           class="border p-4 rounded shadow bg-white flex flex-col justify-between"
       >
         <div>
-          <h2 class="font-bold text-lg">{{ user.name }}</h2>
           <p class="text-xs text-gray-400">ID: {{ user.id }}</p>
+
+          <h2 class="font-bold text-lg">{{ user.name }}</h2>
+          <p class="text-sm text-gray-600">Роль: {{ user.role }}</p>
+
           <p class="text-sm text-gray-600">IP: {{ user.ip }}</p>
           <p class="text-sm text-gray-600">Адрес: {{ user.address_name || '—' }}</p>
         </div>
@@ -54,6 +57,14 @@
             <input v-model="form.name" placeholder="Имя" class="border p-2 w-full rounded" required />
             <input v-model="form.password" placeholder="Пароль" class="border p-2 w-full rounded" required />
             <input v-model="form.ip" placeholder="IP" class="border p-2 w-full rounded" required />
+
+            <select v-model="form.role" class="border p-2 w-full rounded" required>
+              <option disabled value="">Выберите роль</option>
+              <option value="user">Обычный пользователь</option>
+              <option value="moderator">Модератор</option>
+              <option value="admin">Администратор</option>
+            </select>
+
             <select v-model="form.address_id" class="border p-2 w-full rounded" required>
               <option disabled value="">Выберите адрес</option>
               <option v-for="addr in addresses" :key="addr.id" :value="addr.id">
@@ -112,6 +123,7 @@ const form = ref({
   ip: '',
   address_id: '',
   token: '',
+  role: '', // добавлено
 })
 
 const loadUsers = async () => {
@@ -140,6 +152,7 @@ const openModal = (user = null) => {
       ip: '',
       address_id: '',
       token: '',
+      role: 'user', // добавлено
     }
   }
 }

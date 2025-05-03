@@ -1,35 +1,26 @@
-// src/store/auth.js
 import { defineStore } from 'pinia'
-import api from '@/api/axios'
-import { useRouter } from 'vue-router'
+import router from '@/router'
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null,
-        token: localStorage.getItem('token') || '',
+        token: localStorage.getItem('token') || null,
+        role: localStorage.getItem('role') || null
     }),
-    getters: {
-        isAuthenticated: (state) => !!state.token,
-        isAdmin: (state) => state.user?.role === 'admin',
-    },
-    actions: {
-        async login(credentials) {
-            const { data } = await api.post('/login', credentials)
-            this.token = data.token
-            localStorage.setItem('token', data.token)
 
-            await this.fetchUser()
+    actions: {
+        setAuth(token, role) {
+            this.token = token
+            this.role = role
+            localStorage.setItem('token', token)
+            localStorage.setItem('role', role)
         },
-        async fetchUser() {
-            const { data } = await api.get('/')
-            this.user = data
-        },
+
         logout() {
-            this.user = null
-            this.token = ''
+            this.token = null
+            this.role = null
             localStorage.removeItem('token')
-            const router = useRouter()
+            localStorage.removeItem('role')
             router.push('/')
-        },
-    },
+        }
+    }
 })

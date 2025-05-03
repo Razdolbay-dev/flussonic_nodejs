@@ -22,23 +22,25 @@ router.get('/', async (req, res) => {
 
 // Добавить нового пользователя
 router.post('/', async (req, res) => {
-    const { name, password, ip, address_id, token } = req.body;
+    const { name, password, ip, address_id, token, role } = req.body;
 
-    if (!name || !password || !ip || !address_id || !token) {
+    if (!name || !password || !ip || !address_id || !token || !role) {
         return res.status(400).json({ error: 'Все поля обязательны' });
     }
 
     try {
-        // Проверка на существующего пользователя с таким же именем
-        const [existing] = await db.query('SELECT * FROM users WHERE name = ? OR token = ?', [name, token]);
+        const [existing] = await db.query(
+            'SELECT * FROM users WHERE name = ? OR token = ?',
+            [name, token]
+        );
 
         if (existing.length > 0) {
             return res.status(409).json({ error: 'Пользователь с таким именем или токеном уже существует' });
         }
 
         const [result] = await db.query(
-            'INSERT INTO users (name, password, ip, address_id, token) VALUES (?, ?, ?, ?, ?)',
-            [name, password, ip, address_id, token]
+            'INSERT INTO users (name, password, ip, address_id, token, role) VALUES (?, ?, ?, ?, ?, ?)',
+            [name, password, ip, address_id, token, role]
         );
 
         res.status(201).json({ id: result.insertId });
@@ -48,15 +50,18 @@ router.post('/', async (req, res) => {
     }
 });
 
-
 // Обновить пользователя
 router.put('/:id', async (req, res) => {
-    const { name, password, ip, address_id, token } = req.body;
+    const { name, password, ip, address_id, token, role } = req.body;
+
+    if (!name || !password || !ip || !address_id || !token || !role) {
+        return res.status(400).json({ error: 'Все поля обязательны' });
+    }
 
     try {
         const [result] = await db.query(
-            'UPDATE users SET name = ?, password = ?, ip = ?, address_id = ?, token = ? WHERE id = ?',
-            [name, password, ip, address_id, token, req.params.id]
+            'UPDATE users SET name = ?, password = ?, ip = ?, address_id = ?, token = ?, role = ? WHERE id = ?',
+            [name, password, ip, address_id, token, role, req.params.id]
         );
 
         if (result.affectedRows === 0) {

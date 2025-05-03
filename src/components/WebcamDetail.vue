@@ -4,7 +4,7 @@
 
     <div v-if="webcam.uid" class="relative w-full pt-[100%] sm:pt-[60%]">
       <iframe
-          :src="`http://192.168.1.76:8888/${webcam.uid}/embed.html?autoplay=false&dvr=true`"
+          :src="`http://192.168.1.76:8888/${webcam.uid}/embed.html?autoplay=true&dvr=true`"
           allowfullscreen
           class="absolute top-0 left-0 w-full h-full border-0"
       ></iframe>

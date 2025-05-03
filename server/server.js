@@ -6,14 +6,16 @@ import dvrRoutes from './routes/dvr.js';
 import usersRouter from './routes/users.js';
 import clientsTmpRouter from "./routes/clientsTmp.js";
 import webcamsRouter from './routes/webcams.js';
+import authRouter from './routes/auth.js';
 
 const app = express();
 dotenv.config();
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 // Роут для адресов
+app.use('/api/auth', authRouter);
 app.use('/api/addresses', addressesRouter);
 app.use('/api/dvr', dvrRoutes);
 app.use('/api/users', usersRouter);
