@@ -51,7 +51,12 @@ const login = async () => {
     store.setAuth(res.data.token, res.data.role)
 
     // Перенаправление
-    router.push('/')
+    if (res.data.role !== 'user') {
+      router.push('/admin')
+    } else {
+      router.push('/')
+    }
+
   } catch (e) {
     error.value = e.response?.data?.message || 'Ошибка авторизации'
   }

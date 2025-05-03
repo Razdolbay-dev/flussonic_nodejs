@@ -42,7 +42,7 @@ function logout() {
         <div class="hidden md:flex space-x-6">
           <router-link class="py-2 hover:text-blue-600 hover:underline" to="/">Публичные</router-link>
           <router-link class="py-2 hover:text-blue-500 hover:underline" to="/yard">Дворовые</router-link>
-          <router-link v-if="store.token" class="py-2 hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
+          <router-link v-if="store.token && store.role !== 'user'" class="py-2 hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
           <router-link v-if="!store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
           <button v-if="store.token" @click="logout" class="text-red-500 hover:bg-gray-200 rounded-md p-2">Выйти</button>
         </div>
@@ -53,7 +53,7 @@ function logout() {
       <div v-if="isOpen" class="md:hidden mt-4 space-y-2 text-center bg-white rounded-md">
         <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/">Публичные</router-link>
         <router-link class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/yard">Дворовые</router-link>
-        <router-link v-if="store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin">Управление</router-link>
+        <router-link v-if="store.token && store.role !== 'user'" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin">Управление</router-link>
         <router-link v-if="!store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
         <button v-if="store.token" @click="logout" class="block p-2 text-red-500 hover:bg-gray-200 rounded-md">Выйти</button>
       </div>

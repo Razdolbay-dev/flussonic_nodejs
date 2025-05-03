@@ -1,7 +1,7 @@
 // src/api/webcams.js
-import axios from 'axios'
+import axios from '@/api/axios.js' // заменяем дефолтный axios
 
-const API_BASE = 'http://localhost:3000/api/webcams'
+const API_BASE = '/webcams'
 
 export const getWebcams = (params) => axios.get(API_BASE, { params })
 export const createWebcam = (data) => axios.post(API_BASE, data)

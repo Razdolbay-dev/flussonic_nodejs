@@ -1,6 +1,6 @@
-import axios from 'axios'
+import axios from '@/api/axios.js' // заменяем дефолтный axios
 
-const API_BASE = 'http://localhost:3000/api/addresses'
+const API_BASE = '/addresses'
 
 export const getAddresses = () => axios.get(API_BASE)
 export const addAddress = (data) => axios.post(API_BASE, data)

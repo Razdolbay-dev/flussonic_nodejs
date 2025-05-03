@@ -1,6 +1,6 @@
-import axios from 'axios'
+import axios from '@/api/axios.js' // заменяем дефолтный axios
 
-const API_BASE = 'http://localhost:3000/api/clients_tmp';
+const API_BASE = '/clients_tmp';
 
 export const getClientsTmp = () => axios.get(API_BASE)
 export const addClientTmp = (data) => axios.post(API_BASE, data)

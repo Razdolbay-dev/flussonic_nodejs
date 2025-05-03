@@ -1,7 +1,7 @@
 /*M!999999\- enable the sandbox mode */ 
 -- MariaDB dump 10.19  Distrib 10.11.11-MariaDB, for debian-linux-gnu (x86_64)
 --
--- Host: 127.0.0.1    Database: flussonic_db
+-- Host: localhost    Database: flussonic_db
 -- ------------------------------------------------------
 -- Server version	10.11.11-MariaDB-0+deb12u1-log
 
@@ -29,7 +29,7 @@ CREATE TABLE `addresses` (
   `street` varchar(100) DEFAULT NULL,
   `house_number` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,12 @@ INSERT INTO `addresses` VALUES
 (2,'Питкяранта','Рудакова','6'),
 (3,'Питкяранта','Титова','5'),
 (4,'Питкяранта','Рудакова','1'),
-(5,'Питкяранта','Победы','5');
+(5,'Питкяранта','Победы','5'),
+(6,'Питкяранта','Гоголя','13'),
+(7,'Питкяранта','Ленина','15'),
+(8,'Питкяранта','Победы','8'),
+(9,'Питкяранта','Ленина','18'),
+(10,'Питкяранта','Ленина','27');
 /*!40000 ALTER TABLE `addresses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -70,8 +75,6 @@ CREATE TABLE `clients_tmp` (
 
 LOCK TABLES `clients_tmp` WRITE;
 /*!40000 ALTER TABLE `clients_tmp` DISABLE KEYS */;
-INSERT INTO `clients_tmp` VALUES
-(3,'Чулков Павел Анатольевич','+79215278490','30495213','KuLd9lRC0ovD0w0I7mk9','2025-04-23 11:01:08');
 /*!40000 ALTER TABLE `clients_tmp` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -101,11 +104,6 @@ CREATE TABLE `clients_tmp_addresses` (
 
 LOCK TABLES `clients_tmp_addresses` WRITE;
 /*!40000 ALTER TABLE `clients_tmp_addresses` DISABLE KEYS */;
-INSERT INTO `clients_tmp_addresses` VALUES
-(20,3,2,'2025-04-30 08:01:08'),
-(21,3,3,'2025-04-30 08:01:08'),
-(22,3,5,'2025-04-30 08:01:08'),
-(23,3,4,'2025-04-30 08:01:08');
 /*!40000 ALTER TABLE `clients_tmp_addresses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -121,7 +119,7 @@ CREATE TABLE `dvr` (
   `name` varchar(100) DEFAULT NULL,
   `path` text DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -145,7 +143,9 @@ DROP TABLE IF EXISTS `settings`;
 CREATE TABLE `settings` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(100) DEFAULT NULL,
-  `cdn_url` text DEFAULT NULL,
+  `cdn_url` text DEFAULT 'http://localhost:8888',
+  `pubt` varchar(255) DEFAULT NULL,
+  `privt` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -174,12 +174,13 @@ CREATE TABLE `users` (
   `date` datetime DEFAULT current_timestamp(),
   `address_id` int(11) DEFAULT NULL,
   `token` varchar(255) DEFAULT NULL,
+  `role` enum('user','moderator','admin') DEFAULT 'user',
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`),
   UNIQUE KEY `token` (`token`),
   KEY `address_id` (`address_id`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`address_id`) REFERENCES `addresses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -189,7 +190,8 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(5,'razdolbay','kjifHm11.06!','192.168.0.210','2025-04-22 19:19:58',2,'9ddwsc58jbsm9spnn17');
+(5,'razdolbay','kjifHm11.06!','192.168.0.210','2025-04-22 19:19:58',2,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NSwibmFtZSI6InJhemRvbGJheSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc0NjI3NDA3MSwiZXhwIjoxNzQ2Mjc3NjcxfQ.mWt8H87OZ_TuE7PFU1ZdJGMTwkP7Nfy7W87FPu7ZoMY','admin'),
+(6,'user','user10','192.168.0.211','2025-05-03 11:55:44',8,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwibmFtZSI6InVzZXIiLCJyb2xlIjoidXNlciIsImlhdCI6MTc0NjI3MzY1NiwiZXhwIjoxNzQ2Mjc3MjU2fQ.LKPUqFgcjYXpPtVqj7Fdum2XfOcwuWl-evxmwfsO_0o','user');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -202,21 +204,20 @@ DROP TABLE IF EXISTS `webcam`;
 /*!40101 SET character_set_client = utf8mb4 */;
 CREATE TABLE `webcam` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(100) DEFAULT NULL,
-  `title` varchar(100) DEFAULT NULL,
-  `description` text DEFAULT NULL,
-  `url` text DEFAULT NULL,
+  `uid` varchar(100) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `url` text NOT NULL,
   `dvr_id` int(11) DEFAULT NULL,
-  `preset` varchar(100) DEFAULT NULL,
   `address_id` int(11) DEFAULT NULL,
-  `role` enum('public','private') DEFAULT 'private',
+  `role` enum('public','private') DEFAULT 'public',
   `day_count` int(11) DEFAULT 0,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uid` (`uid`),
   KEY `dvr_id` (`dvr_id`),
   KEY `address_id` (`address_id`),
   CONSTRAINT `webcam_ibfk_1` FOREIGN KEY (`dvr_id`) REFERENCES `dvr` (`id`),
   CONSTRAINT `webcam_ibfk_2` FOREIGN KEY (`address_id`) REFERENCES `addresses` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -225,6 +226,9 @@ CREATE TABLE `webcam` (
 
 LOCK TABLES `webcam` WRITE;
 /*!40000 ALTER TABLE `webcam` DISABLE KEYS */;
+INSERT INTO `webcam` VALUES
+(6,'0b2b7lvx','Ленина 15','rtsp://stream033:stream03@10.200.1.42:554/',4,4,'public',86400),
+(9,'ybke5hii','Гоголя 13','rtsp://stream033:stream033@10.200.1.10:554/cam/realmonitor?channel=1&subtype=0',4,4,'private',259200);
 /*!40000 ALTER TABLE `webcam` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -237,4 +241,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-04-23 16:28:13
+-- Dump completed on 2025-05-03 16:40:32
