@@ -17,10 +17,16 @@ router.post('/login', async (req, res) => {
         if (!isMatch) return res.status(401).json({ message: 'Не верный пароль' });
 
         const token = jwt.sign(
-            { id: user.id, name: user.name, role: user.role },
+            {
+                id: user.id,
+                name: user.name,
+                role: user.role,
+                origin: 'perm' // ✅ добавляем тип
+            },
             process.env.TOKEN_SECRET_KEY,
             { expiresIn: '1h' }
-        );
+        )
+
 
         await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
 
@@ -47,10 +53,16 @@ router.post('/tmp-login', async (req, res) => {
         if (!isMatch) return res.status(401).json({ message: 'Неверный пароль' });
 
         const token = jwt.sign(
-            { id: user.id, name: user.name, role: user.role },
+            {
+                id: user.id,
+                phone: user.phone,
+                role: user.role,
+                origin: 'temp' // ✅ временный пользователь
+            },
             process.env.TOKEN_SECRET_KEY,
             { expiresIn: '1h' }
-        );
+        )
+
 
         await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
 

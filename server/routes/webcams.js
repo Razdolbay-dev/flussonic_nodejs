@@ -3,14 +3,13 @@
 import express from 'express'
 import { db } from '../config/db.js'
 import axios from 'axios'
-
+import { requireAuth } from '../middleware/requireAuth.js'
 const router = express.Router()
 
 // Получить все камеры
 // GET /api/webcams
 router.get('/', async (req, res) => {
     const { address_id, page = 1, limit = 10 } = req.query
-
     const offset = (parseInt(page) - 1) * parseInt(limit)
     const params = []
     let whereClause = ''
@@ -50,6 +49,61 @@ router.get('/', async (req, res) => {
     } catch (err) {
         console.error('Ошибка при получении камер с пагинацией:', err)
         res.status(500).json({ error: 'Ошибка сервера' })
+    }
+})
+
+router.get('/private', requireAuth, async (req, res) => {
+    try {
+        const { id: userId, origin } = req.user
+
+        console.log(`Запрос камер от пользователя ID: ${userId}, источник: ${origin}`)
+
+        let addressIds = []
+
+        if (origin === 'temp') {
+            const [rows] = await db.query(
+                'SELECT address_id FROM clients_tmp_addresses WHERE client_id = ?',
+                [userId]
+            )
+            addressIds = rows.map(row => row.address_id)
+            console.log('Адреса временного пользователя:', addressIds)
+        } else {
+            const [rows] = await db.query(
+                'SELECT address_id FROM users WHERE id = ?',
+                [userId]
+            )
+            if (!rows.length) {
+                console.warn('Пользователь не найден в таблице users:', userId)
+                return res.status(404).json({ message: 'Пользователь не найден' })
+            }
+            addressIds = [rows[0].address_id]
+            console.log('Адрес постоянного пользователя:', addressIds)
+        }
+
+        if (!addressIds.length) {
+            console.warn('Нет доступных адресов для пользователя')
+            return res.json({ items: [], total: 0 })
+        }
+
+        const [cams] = await db.query(`
+            SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
+            FROM webcam w
+                     LEFT JOIN dvr d ON w.dvr_id = d.id
+                     LEFT JOIN addresses a ON w.address_id = a.id
+            WHERE w.role = 'private' AND w.address_id IN (?)
+            ORDER BY w.id DESC
+        `, [addressIds])
+
+        console.log(`Найдено приватных камер: ${cams.length}`)
+
+        res.json({
+            items: cams,
+            total: cams.length
+        })
+
+    } catch (err) {
+        console.error('Ошибка при получении приватных камер:', err)
+        res.status(500).json({ message: 'Ошибка сервера' })
     }
 })
 
@@ -206,8 +260,6 @@ router.put('/:id', async (req, res) => {
         connection.release()
     }
 })
-
-
 
 // Удалить камеру
 router.delete('/:id', async (req, res) => {

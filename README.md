@@ -56,6 +56,7 @@ phone VARCHAR(20),
 password VARCHAR(255),
 token VARCHAR(255),
 created DATETIME DEFAULT CURRENT_TIMESTAMP,
+ccess_until DATETIME,
 );
 
 -- 4.1 Таблица соответствия временных клиентов и адресов
@@ -63,7 +64,6 @@ CREATE TABLE clients_tmp_addresses (
   id INT AUTO_INCREMENT PRIMARY KEY,
   client_id INT,
   address_id INT,
-  access_until DATETIME,
   FOREIGN KEY (client_id) REFERENCES clients_tmp(id) ON DELETE CASCADE,
   FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE CASCADE
 );

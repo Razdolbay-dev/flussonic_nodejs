@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
         const [clients] = await db.query('SELECT * FROM clients_tmp ORDER BY id DESC')
         for (const client of clients) {
             const [addresses] = await db.query(
-                'SELECT address_id, access_until FROM clients_tmp_addresses WHERE client_id = ?',
+                'SELECT address_id FROM clients_tmp_addresses WHERE client_id = ?',
                 [client.id]
             )
             client.addresses = addresses
@@ -65,8 +65,8 @@ router.put('/:id', async (req, res) => {
 
         for (const addr of addresses) {
             await db.query(
-                'INSERT INTO clients_tmp_addresses (client_id, address_id, access_until) VALUES (?, ?, ?)',
-                [clientId, addr.address_id, addr.access_until]
+                'INSERT INTO clients_tmp_addresses (client_id, address_id) VALUES (?, ?)',
+                [clientId, addr.address_id]
             )
         }
 

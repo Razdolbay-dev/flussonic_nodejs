@@ -8,3 +8,10 @@ export const createWebcam = (data) => axios.post(API_BASE, data)
 export const updateWebcam = (id, data) => axios.put(`${API_BASE}/${id}`, data)
 export const deleteWebcam = (id) => axios.delete(`${API_BASE}/${id}`)
 export const getWebcamById = (id) => axios.get(`${API_BASE}/${id}`) // ✅ добавлено
+export const getPrivateWebcams = (token) => {
+    return axios.get('/webcams/private', {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+}

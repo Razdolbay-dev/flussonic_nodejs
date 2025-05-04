@@ -29,7 +29,7 @@
                   v-for="a in client.addresses"
                   :key="a.address_id"
               >
-                ID: {{ a.address_id }} — до {{ new Date(a.access_until).toLocaleString() }}
+                ID: {{ a.address_id }}
               </li>
             </ul>
           </div>
