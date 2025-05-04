@@ -25,7 +25,7 @@
       </div>
 
       <h2 class="text-xl font-bold text-center mb-4">
-        {{ activeTab === 'login' ? 'Вход в админ-панель' : 'Временный вход' }}
+        {{ activeTab === 'login' ? 'Вход' : 'Вход' }}
       </h2>
 
 
@@ -59,7 +59,14 @@
       </form>
 
       <p v-if="error" class="text-red-500 text-center mt-2">{{ error }}</p>
-      <a class="text-center pt-5 text-blue-500 hover:text-blue-800 " href="/register"> Как получить временный доступ ? </a>
+
+      <a
+          v-if="activeTab === 'temp'"
+          class="block text-center pt-5 text-blue-500 hover:text-blue-800 transition"
+          href="/register"
+      >
+        Как получить временный доступ?
+      </a>
 
     </div>
 
@@ -70,7 +77,7 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from '@/api/axios.js'
 
 const store = useAuthStore()
 const router = useRouter()
@@ -84,7 +91,7 @@ const error = ref('')
 
 const loginByName = async () => {
   try {
-    const res = await axios.post('http://localhost:3000/api/auth/login', {
+    const res = await axios.post('/auth/login', {
       name: name.value,
       password: password.value
     })
@@ -103,7 +110,7 @@ const loginByName = async () => {
 
 const loginByPhone = async () => {
   try {
-    const res = await axios.post('http://localhost:3000/api/auth/tmp-login', {
+    const res = await axios.post('/auth/tmp-login', {
       phone: phone.value,
       password: password.value
     })

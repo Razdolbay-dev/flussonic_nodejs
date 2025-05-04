@@ -24,7 +24,7 @@ import WebcamDetail from '@/components/WebcamDetail.vue'
 import TmpRegister from '@/pages/TmpRegister.vue'
 
 const routes = [
-    { path: '/login', component: LoginView },
+
     {
         path: '/',
         component: DefaultLayout,
@@ -34,7 +34,8 @@ const routes = [
             { path: 'yard', name: 'Yard', component: Yard },
             { path: 'allcams', name: 'AllWebCams', component: AllWebCams, meta: { requiresPrivileged: true }, },
             { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
-            { path: 'register', name: 'TmpRegister', component: TmpRegister },
+            { path: '/login', component: LoginView },
+            { path: '/register', name: 'TmpRegister', component: TmpRegister },
         ],
     },
     {

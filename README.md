@@ -51,13 +51,11 @@ FOREIGN KEY (address_id) REFERENCES addresses(id)
 -- 4. Таблица clients_tmp (временные клиенты)
 CREATE TABLE clients_tmp (
 id INT AUTO_INCREMENT PRIMARY KEY,
-name VARCHAR(100),
-title VARCHAR(100),
+fio VARCHAR(100),
 phone VARCHAR(20),
 password VARCHAR(255),
 token VARCHAR(255),
 created DATETIME DEFAULT CURRENT_TIMESTAMP,
-deleted DATETIME
 );
 
 -- 4.1 Таблица соответствия временных клиентов и адресов
