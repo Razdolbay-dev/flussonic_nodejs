@@ -3,12 +3,13 @@ import { db } from '../config/db.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
+import { protectStrict } from '../middleware/authMiddleware.js'
 
 const router = express.Router();
 const execAsync = promisify(exec);
 
 // Получить все DVR
-router.get('/', async (req, res) => {
+router.get('/', protectStrict, async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM dvr ORDER BY id DESC');
         res.json(rows);
@@ -77,7 +78,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Получить быструю статистику диска по пути DVR
-router.get('/stats', async (req, res) => {
+router.get('/stats', protectStrict, async (req, res) => {
     const dvrPath = req.query.path;
     if (!dvrPath) {
         return res.status(400).json({ error: 'Параметр path обязателен' });

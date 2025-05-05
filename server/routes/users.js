@@ -1,10 +1,10 @@
 import express from 'express';
 import { db } from '../config/db.js';
-
+import { protectStrict } from '../middleware/authMiddleware.js'
 const router = express.Router();
 
 // Получить всех пользователей
-router.get('/', async (req, res) => {
+router.get('/', protectStrict,async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT users.*,

@@ -130,20 +130,6 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Получить одну камеру
-router.get('/:id', async (req, res) => {
-    try {
-        const [rows] = await db.query('SELECT * FROM webcam WHERE id = ?', [req.params.id])
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'Камера не найдена' })
-        }
-        res.json(rows[0])
-    } catch (err) {
-        console.error('Ошибка при получении камеры:', err)
-        res.status(500).json({ error: 'Ошибка сервера' })
-    }
-})
-
 // Создать новую камеру
 router.post('/', async (req, res) => {
     const { uid, name, url, dvr_id, address_id, role, day_count } = req.body

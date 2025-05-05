@@ -21,7 +21,9 @@
           <p class="text-sm text-gray-600">Телефон: {{ client.phone }}</p>
           <p class="text-sm text-gray-600">Пароль: {{ client.password }}</p>
           <p class="text-sm text-gray-600">Токен: <span class="break-all">{{ client.token }}</span></p>
-
+          <p class="text-sm text-gray-600">
+            Доступен до: {{ new Date(client.access_until).toLocaleString() }}
+          </p>
           <div class="mt-2">
             <p class="text-xs font-semibold mb-1">Адреса доступа:</p>
             <ul class="text-sm text-gray-700 list-disc ml-5">
@@ -67,7 +69,7 @@
             <input v-model="form.fio" placeholder="ФИО" class="border p-2 w-full rounded" required />
             <input v-model="form.phone" placeholder="Телефон" class="border p-2 w-full rounded" />
 
-            <!-- Выбор адресов и срока доступа -->
+            <!-- Выбор адресов -->
             <div class="border rounded p-3">
               <p class="font-semibold mb-2">Доступ к адресам</p>
 
@@ -91,20 +93,9 @@
                 </button>
               </div>
 
-              <div class="mb-2">
-                <label class="text-sm font-semibold">Доступ на (дней):</label>
-                <input
-                    type="number"
-                    v-model.number="accessDays"
-                    min="1"
-                    max="7"
-                    class="border px-2 py-1 rounded text-sm ml-2 w-20"
-                />
-              </div>
-
               <ul class="text-sm text-gray-700 list-disc ml-5 mt-2">
                 <li v-for="id in form.address_ids" :key="id">
-                  {{ getAddressLabel(id) }} — до {{ new Date(calculateAccessUntil()).toLocaleString() }}
+                  {{ getAddressLabel(id) }}
                   <button
                       @click="removeAddress(id)"
                       class="ml-2 text-red-600 hover:underline text-xs"
@@ -113,6 +104,22 @@
                   </button>
                 </li>
               </ul>
+            </div>
+
+            <!-- Доступ до -->
+            <div class="mt-4">
+              <label class="text-sm font-semibold">Доступ на (дней):</label>
+              <input
+                  type="number"
+                  v-model.number="accessDays"
+                  min="1"
+                  max="7"
+                  class="border px-2 py-1 rounded text-sm ml-2 w-20"
+                  @change="form.access_until = calculateAccessUntil()"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Будет доступен до: {{ new Date(form.access_until).toLocaleString() }}
+              </p>
             </div>
 
             <div class="flex justify-end gap-2 mt-4">
@@ -153,7 +160,8 @@ const editingClient = ref(null)
 const form = reactive({
   fio: '',
   phone: '',
-  address_ids: []
+  address_ids: [],
+  access_until: ''
 })
 
 const selectedAddressId = ref('')
@@ -176,6 +184,7 @@ const openModal = (client = null) => {
   form.fio = client?.fio || ''
   form.phone = client?.phone || ''
   form.address_ids = client?.addresses?.map(a => a.address_id) || []
+  form.access_until = client?.access_until || calculateAccessUntil()
 
   selectedAddressId.value = ''
   accessDays.value = 1
@@ -190,15 +199,9 @@ const generatePassword = () => {
 }
 
 const handleSubmit = async () => {
-  const access_until = calculateAccessUntil()
-  const addressesWithAccess = form.address_ids.map(id => ({
-    address_id: id,
-    access_until
-  }))
-
   const payload = {
     ...form,
-    addresses: addressesWithAccess
+    addresses: form.address_ids.map(id => ({ address_id: id }))
   }
 
   if (editingClient.value) {
@@ -252,4 +255,5 @@ const calculateAccessUntil = () => {
 onMounted(async () => {
   await Promise.all([loadClients(), loadAddresses()])
 })
+
 </script>

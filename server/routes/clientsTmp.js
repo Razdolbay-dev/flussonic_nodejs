@@ -1,11 +1,11 @@
 import express from 'express'
 import { db } from '../config/db.js'
 import { nanoid } from 'nanoid'
-
+import { protectStrict } from '../middleware/authMiddleware.js'
 const router = express.Router()
 
 // Получить всех временных клиентов
-router.get('/', async (req, res) => {
+router.get('/', protectStrict, async (req, res) => {
     try {
         const [clients] = await db.query('SELECT * FROM clients_tmp ORDER BY id DESC')
         for (const client of clients) {
@@ -24,21 +24,21 @@ router.get('/', async (req, res) => {
 
 // Добавить нового клиента
 router.post('/', async (req, res) => {
-    const { fio, phone, password, addresses = [] } = req.body
+    const { fio, phone, password, access_until, addresses = [] } = req.body
     const token = nanoid(20)
 
     try {
         const [result] = await db.query(
-            'INSERT INTO clients_tmp (fio, phone, password, token) VALUES (?, ?, ?, ?)',
-            [fio, phone, password, token]
+            'INSERT INTO clients_tmp (fio, phone, password, token, access_until) VALUES (?, ?, ?, ?, ?)',
+            [fio, phone, password, token, access_until]
         )
 
         const clientId = result.insertId
 
         for (const addr of addresses) {
             await db.query(
-                'INSERT INTO clients_tmp_addresses (client_id, address_id, access_until) VALUES (?, ?, ?)',
-                [clientId, addr.address_id, addr.access_until]
+                'INSERT INTO clients_tmp_addresses (client_id, address_id) VALUES (?, ?)',
+                [clientId, addr.address_id]
             )
         }
 
@@ -51,16 +51,24 @@ router.post('/', async (req, res) => {
 
 // Обновить клиента
 router.put('/:id', async (req, res) => {
-    const { fio, phone, password, addresses = [] } = req.body
+    let { fio, phone, password, access_until, addresses = [] } = req.body
     const clientId = req.params.id
 
     try {
+        // Получить текущий пароль, если не передан
+        if (!password) {
+            const [rows] = await db.query('SELECT password FROM clients_tmp WHERE id = ?', [clientId])
+            if (rows.length === 0) {
+                return res.status(404).json({ error: 'Клиент не найден' })
+            }
+            password = rows[0].password
+        }
+
         await db.query(
-            'UPDATE clients_tmp SET fio = ?, phone = ?, password = ? WHERE id = ?',
-            [fio, phone, password, clientId]
+            'UPDATE clients_tmp SET fio = ?, phone = ?, password = ?, access_until = ? WHERE id = ?',
+            [fio, phone, password, access_until, clientId]
         )
 
-        // Удалить старые адреса
         await db.query('DELETE FROM clients_tmp_addresses WHERE client_id = ?', [clientId])
 
         for (const addr of addresses) {
