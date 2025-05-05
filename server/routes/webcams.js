@@ -1,7 +1,6 @@
-// server/routes/webcams.js
-
 import express from 'express'
 import { db } from '../config/db.js'
+import { getFlussonicSettings } from '../config/getFlussonicSettings.js'
 import axios from 'axios'
 import { requireAuth } from '../middleware/requireAuth.js'
 const router = express.Router()
@@ -136,23 +135,22 @@ router.post('/', async (req, res) => {
     const connection = await db.getConnection()
 
     try {
-        // 1. Начинаем транзакцию
+        const { cdnUrl, authHeader, templates } = await getFlussonicSettings()
+        const templateName = role === 'private' ? templates.private : templates.public
+
         await connection.beginTransaction()
 
-        // 2. Вставляем камеру в БД
         const [result] = await connection.query(
             `INSERT INTO webcam (uid, name, url, dvr_id, address_id, role, day_count)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [uid, name, url, dvr_id, address_id, role, day_count]
         )
 
-        // 3. Подготовка запроса в Flussonic
-        const flussonicUrl = `http://192.168.1.76:8888/streamer/api/v3/streams/${uid}`
-
+        const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
         const flussonicPayload = {
             inputs: [{ url }],
             title: name,
-            template: '_pubcam',
+            template: templateName,
             dvr: {
                 root: '/media/dvr',
                 dvr_limit: day_count.toString()
@@ -160,27 +158,21 @@ router.post('/', async (req, res) => {
         }
 
         const flussonicHeaders = {
-            'accept': 'application/json',
+            accept: 'application/json',
             'content-type': 'application/json',
-            'authorization': 'Basic cm9vdDpjdmRZUDc4YQ=='
+            authorization: authHeader
         }
 
-        // 4. Отправка в Flussonic
         const response = await axios.put(flussonicUrl, flussonicPayload, { headers: flussonicHeaders })
 
-        if (response.status >= 400) {
-            throw new Error(`Flussonic вернул ошибку: ${response.status}`)
-        }
+        if (response.status >= 400) throw new Error(`Flussonic error: ${response.status}`)
 
-        // 5. Успех → коммитим
         await connection.commit()
-
         res.status(201).json({ id: result.insertId })
     } catch (err) {
-        // 6. Ошибка → откат
         await connection.rollback()
-        console.error('Ошибка при создании камеры или Flussonic:', err.message)
-        res.status(500).json({ error: 'Ошибка при создании. Проверь Flussonic.' })
+        console.error('Ошибка Flussonic или БД:', err.message)
+        res.status(500).json({ error: 'Ошибка при создании. Проверь Flussonic/настройки.' })
     } finally {
         connection.release()
     }
@@ -192,6 +184,9 @@ router.put('/:id', async (req, res) => {
     const connection = await db.getConnection()
 
     try {
+        const { cdnUrl, authHeader, templates } = await getFlussonicSettings()
+        const templateName = role === 'private' ? templates.private : templates.public
+
         // 1. Начинаем транзакцию
         await connection.beginTransaction()
 
@@ -204,7 +199,7 @@ router.put('/:id', async (req, res) => {
         )
 
         // 3. Подготовка данных для Flussonic
-        const flussonicUrl = `http://192.168.1.76:8888/streamer/api/v3/streams/${uid}`
+        const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
 
         const flussonicPayload = {
             inputs: [
@@ -213,7 +208,7 @@ router.put('/:id', async (req, res) => {
                 }
             ],
             title: name,
-            template: '_pubcam',
+            template: templateName,
             dvr: {
                 root: '/media/dvr',
                 dvr_limit: day_count.toString()
@@ -221,9 +216,8 @@ router.put('/:id', async (req, res) => {
         }
 
         const flussonicHeaders = {
-            'accept': 'application/json',
-            'content-type': 'application/json',
-            'authorization': 'Basic cm9vdDpjdmRZUDc4YQ=='
+            accept: 'application/json',
+            authorization: authHeader
         }
 
         // 4. Запрос в Flussonic

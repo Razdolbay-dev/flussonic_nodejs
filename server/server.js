@@ -10,6 +10,8 @@ import usersRouter from './routes/users.js';
 import clientsTmpRouter from "./routes/clientsTmp.js";
 import webcamsRouter from './routes/webcams.js';
 import authRouter from './routes/auth.js';
+import flussonicRouter from './routes/flussonic.js';
+import settingsRouter from './routes/settings.js';
 
 const app = express();
 dotenv.config();
@@ -19,6 +21,7 @@ app.use(express.json());
 
 // 🚫 Не защищаем login/registration
 app.use('/api/auth', authRouter);
+app.use('/api/flussonic', flussonicRouter); // 👈 Flussonic должен иметь доступ без авторизации
 
 // ❗️ Middleware авторизации для всех, кроме auth
 app.use(protectNonGetRequests);
@@ -29,6 +32,7 @@ app.use('/api/dvr', dvrRoutes);
 app.use('/api/users', usersRouter);
 app.use('/api/clients_tmp', clientsTmpRouter);
 app.use('/api/webcams', webcamsRouter);
+app.use('/api/settings', settingsRouter);
 
 // Запуск
 const PORT = process.env.PORT || 3000;
