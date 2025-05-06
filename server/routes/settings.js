@@ -18,6 +18,19 @@ router.get('/', protectStrict, async (req, res) => {
     }
 });
 
+router.get('/cdn-url', async (req, res) => {
+    try {
+        const [rows] = await db.query('SELECT cdn_url FROM settings LIMIT 1');
+        if (!rows.length) return res.status(404).json({ error: 'cdn_url не найден' });
+
+        res.json({ cdnUrl: rows[0].cdn_url });
+    } catch (err) {
+        console.error('Ошибка при получении cdn_url:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+
 // Обновить настройки
 router.put('/', async (req, res) => {
     const { title, cdn_url, pubt, privt, username, password } = req.body;

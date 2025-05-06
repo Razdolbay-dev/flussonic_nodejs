@@ -6,8 +6,7 @@
 
       <div v-if="webcam.uid" class="relative w-full pt-[100%] sm:pt-[60%]">
         <iframe
-            :src="`http://192.168.1.76:8888/${webcam.uid}/embed.html?autoplay=true&dvr=true`"
-            allowfullscreen
+            :src="`${cdnUrl}/${webcam.uid}/embed.html?autoplay=true&dvr=true`"            allowfullscreen
             class="absolute top-0 left-0 w-full h-full border-0"
         ></iframe>
       </div>
@@ -25,12 +24,19 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { getWebcamById } from '@/api/webcams.js'
+import { getCdnUrl } from '@/api/settings.js'
 
 const route = useRoute()
 const webcam = ref({})
+const cdnUrl = ref('')
 
 onMounted(async () => {
-  const { data } = await getWebcamById(route.params.id)
-  webcam.value = data
+  const [{ data: webcamData }, { data: cdnData }] = await Promise.all([
+    getWebcamById(route.params.id),
+    getCdnUrl()
+  ])
+
+  webcam.value = webcamData
+  cdnUrl.value = cdnData.cdnUrl
 })
 </script>

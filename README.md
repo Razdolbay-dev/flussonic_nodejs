@@ -9,10 +9,10 @@ Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://
 CREATE DATABASE flussonic_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- Создать пользователя и задать пароль
-CREATE USER 'flussonic'@'localhost' IDENTIFIED BY 'z1t89e5g7wq3msr6v2n0xdkf4lujabci';
+CREATE USER 'flussonic'@'127.0.0.1' IDENTIFIED BY 'z1t89e5g7wq3msr6v2n0xdkf4lujabci';
 
 -- Выдать все права на базу данных
-GRANT ALL PRIVILEGES ON flussonic_db.* TO 'flussonic'@'localhost';
+GRANT ALL PRIVILEGES ON flussonic_db.* TO 'flussonic'@'127.0.0.1';
 
 -- Обновить привилегии
 FLUSH PRIVILEGES;

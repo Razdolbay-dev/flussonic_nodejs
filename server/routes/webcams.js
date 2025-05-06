@@ -1,14 +1,15 @@
 import express from 'express'
-import { db } from '../config/db.js'
-import { getFlussonicSettings } from '../config/getFlussonicSettings.js'
+import {db} from '../config/db.js'
+import {getFlussonicSettings} from '../config/getFlussonicSettings.js'
 import axios from 'axios'
-import { requireAuth } from '../middleware/requireAuth.js'
+import {requireAuth} from '../middleware/requireAuth.js'
+
 const router = express.Router()
 
 // Получить все камеры
 // GET /api/webcams
 router.get('/', async (req, res) => {
-    const { address_id, page = 1, limit = 10 } = req.query
+    const {address_id, page = 1, limit = 10} = req.query
     const offset = (parseInt(page) - 1) * parseInt(limit)
     const params = []
     let whereClause = ''
@@ -26,7 +27,8 @@ router.get('/', async (req, res) => {
                      LEFT JOIN addresses a ON w.address_id = a.id
                 ${whereClause}
             ORDER BY w.id DESC
-                LIMIT ? OFFSET ?
+                LIMIT ?
+            OFFSET ?
         `
         params.push(parseInt(limit), offset)
 
@@ -47,13 +49,13 @@ router.get('/', async (req, res) => {
         })
     } catch (err) {
         console.error('Ошибка при получении камер с пагинацией:', err)
-        res.status(500).json({ error: 'Ошибка сервера' })
+        res.status(500).json({error: 'Ошибка сервера'})
     }
 })
 
 router.get('/private', requireAuth, async (req, res) => {
     try {
-        const { id: userId, origin } = req.user
+        const {id: userId, origin} = req.user
 
         console.log(`Запрос камер от пользователя ID: ${userId}, источник: ${origin}`)
 
@@ -73,7 +75,7 @@ router.get('/private', requireAuth, async (req, res) => {
             )
             if (!rows.length) {
                 console.warn('Пользователь не найден в таблице users:', userId)
-                return res.status(404).json({ message: 'Пользователь не найден' })
+                return res.status(404).json({message: 'Пользователь не найден'})
             }
             addressIds = [rows[0].address_id]
             console.log('Адрес постоянного пользователя:', addressIds)
@@ -81,7 +83,7 @@ router.get('/private', requireAuth, async (req, res) => {
 
         if (!addressIds.length) {
             console.warn('Нет доступных адресов для пользователя')
-            return res.json({ items: [], total: 0 })
+            return res.json({items: [], total: 0})
         }
 
         const [cams] = await db.query(`
@@ -89,7 +91,8 @@ router.get('/private', requireAuth, async (req, res) => {
             FROM webcam w
                      LEFT JOIN dvr d ON w.dvr_id = d.id
                      LEFT JOIN addresses a ON w.address_id = a.id
-            WHERE w.role = 'private' AND w.address_id IN (?)
+            WHERE w.role = 'private'
+              AND w.address_id IN (?)
             ORDER BY w.id DESC
         `, [addressIds])
 
@@ -102,7 +105,7 @@ router.get('/private', requireAuth, async (req, res) => {
 
     } catch (err) {
         console.error('Ошибка при получении приватных камер:', err)
-        res.status(500).json({ message: 'Ошибка сервера' })
+        res.status(500).json({message: 'Ошибка сервера'})
     }
 })
 
@@ -111,34 +114,39 @@ router.get('/private', requireAuth, async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const [rows] = await db.query(`
-      SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
-      FROM webcam w
-      LEFT JOIN dvr d ON w.dvr_id = d.id
-      LEFT JOIN addresses a ON w.address_id = a.id
-      WHERE w.id = ?
-    `, [req.params.id]);
+            SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
+            FROM webcam w
+                     LEFT JOIN dvr d ON w.dvr_id = d.id
+                     LEFT JOIN addresses a ON w.address_id = a.id
+            WHERE w.id = ?
+        `, [req.params.id]);
 
         if (rows.length === 0) {
-            return res.status(404).json({ error: 'Камера не найдена' });
+            return res.status(404).json({error: 'Камера не найдена'});
         }
 
         res.json(rows[0]);
     } catch (err) {
         console.error('Ошибка при получении камеры:', err);
-        res.status(500).json({ error: 'Ошибка сервера' });
+        res.status(500).json({error: 'Ошибка сервера'});
     }
 });
 
 // Создать новую камеру
 router.post('/', async (req, res) => {
-    const { uid, name, url, dvr_id, address_id, role, day_count } = req.body
+    const {uid, name, url, dvr_id, address_id, role, day_count} = req.body
     const connection = await db.getConnection()
 
     try {
-        const { cdnUrl, authHeader, templates } = await getFlussonicSettings()
+        const {cdnUrl, authHeader, templates} = await getFlussonicSettings()
         const templateName = role === 'private' ? templates.private : templates.public
 
         await connection.beginTransaction()
+
+        // Получаем DVR путь по dvr_id
+        const [[dvrRow]] = await connection.query('SELECT path FROM dvr WHERE id = ?', [dvr_id])
+        if (!dvrRow || !dvrRow.path) throw new Error('DVR path not найден')
+
 
         const [result] = await connection.query(
             `INSERT INTO webcam (uid, name, url, dvr_id, address_id, role, day_count)
@@ -148,11 +156,11 @@ router.post('/', async (req, res) => {
 
         const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
         const flussonicPayload = {
-            inputs: [{ url }],
+            inputs: [{url}],
             title: name,
             template: templateName,
             dvr: {
-                root: '/media/dvr',
+                root: dvrRow.path,
                 dvr_limit: day_count.toString()
             }
         }
@@ -163,16 +171,16 @@ router.post('/', async (req, res) => {
             authorization: authHeader
         }
 
-        const response = await axios.put(flussonicUrl, flussonicPayload, { headers: flussonicHeaders })
+        const response = await axios.put(flussonicUrl, flussonicPayload, {headers: flussonicHeaders})
 
         if (response.status >= 400) throw new Error(`Flussonic error: ${response.status}`)
 
         await connection.commit()
-        res.status(201).json({ id: result.insertId })
+        res.status(201).json({id: result.insertId})
     } catch (err) {
         await connection.rollback()
         console.error('Ошибка Flussonic или БД:', err.message)
-        res.status(500).json({ error: 'Ошибка при создании. Проверь Flussonic/настройки.' })
+        res.status(500).json({error: 'Ошибка при создании. Проверь Flussonic/настройки.'})
     } finally {
         connection.release()
     }
@@ -190,49 +198,59 @@ router.put('/:id', async (req, res) => {
         // 1. Начинаем транзакцию
         await connection.beginTransaction()
 
-        // 2. Обновляем камеру в БД
+        // 2. Получаем старый DVR путь
+        const [[oldRow]] = await connection.query(`
+            SELECT d.path AS old_path
+            FROM webcam w
+            LEFT JOIN dvr d ON w.dvr_id = d.id
+            WHERE w.id = ?
+        `, [req.params.id])
+        if (!oldRow?.old_path) throw new Error('Не удалось получить старый DVR путь')
+
+        // 3. Получаем новый DVR путь
+        const [[newRow]] = await connection.query('SELECT path FROM dvr WHERE id = ?', [dvr_id])
+        if (!newRow?.path) throw new Error('Новый DVR путь не найден')
+
+        const oldPath = oldRow.old_path
+        const newPath = newRow.path
+
+        // 4. Обновляем камеру в БД
         await connection.query(
-            `UPDATE webcam 
-       SET uid = ?, name = ?, url = ?, dvr_id = ?, address_id = ?, role = ?, day_count = ?
-       WHERE id = ?`,
+            `UPDATE webcam
+             SET uid = ?, name = ?, url = ?, dvr_id = ?, address_id = ?, role = ?, day_count = ?
+             WHERE id = ?`,
             [uid, name, url, dvr_id, address_id, role, day_count, req.params.id]
         )
 
-        // 3. Подготовка данных для Flussonic
-        const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
-
-        const flussonicPayload = {
-            inputs: [
-                {
-                    url: url
+        // 5. Обновляем стрим в Flussonic, если DVR путь изменился
+        if (oldPath !== newPath) {
+            const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
+            const flussonicPayload = {
+                inputs: [{ url }],
+                title: name,
+                template: templateName,
+                dvr: {
+                    root: newPath,
+                    dvr_limit: day_count.toString()
                 }
-            ],
-            title: name,
-            template: templateName,
-            dvr: {
-                root: '/media/dvr',
-                dvr_limit: day_count.toString()
+            }
+
+            const flussonicHeaders = {
+                accept: 'application/json',
+                authorization: authHeader
+            }
+
+            const response = await axios.put(flussonicUrl, flussonicPayload, { headers: flussonicHeaders })
+
+            if (response.status >= 400) {
+                throw new Error(`Flussonic вернул ошибку: ${response.status}`)
             }
         }
 
-        const flussonicHeaders = {
-            accept: 'application/json',
-            authorization: authHeader
-        }
-
-        // 4. Запрос в Flussonic
-        const response = await axios.put(flussonicUrl, flussonicPayload, { headers: flussonicHeaders })
-
-        if (response.status >= 400) {
-            throw new Error(`Flussonic вернул ошибку: ${response.status}`)
-        }
-
-        // 5. Всё успешно — коммитим транзакцию
+        // 6. Успешное завершение транзакции
         await connection.commit()
-
         res.json({ message: 'Камера обновлена' })
     } catch (err) {
-        // 6. Ошибка — откатываем транзакцию
         await connection.rollback()
         console.error('Ошибка при обновлении камеры или Flussonic:', err.message)
         res.status(500).json({ error: 'Ошибка при обновлении. Проверь Flussonic.' })
@@ -241,29 +259,34 @@ router.put('/:id', async (req, res) => {
     }
 })
 
+
 // Удалить камеру
 router.delete('/:id', async (req, res) => {
     const connection = await db.getConnection()
 
     try {
+        const {cdnUrl, authHeader, templates} = await getFlussonicSettings()
+
+
         await connection.beginTransaction()
 
         // 1. Получаем uid камеры, чтобы удалить стрим в Flussonic
         const [rows] = await connection.query('SELECT uid FROM webcam WHERE id = ?', [req.params.id])
         if (rows.length === 0) {
-            return res.status(404).json({ error: 'Камера не найдена' })
+            return res.status(404).json({error: 'Камера не найдена'})
         }
 
         const uid = rows[0].uid
 
         // 2. Удаляем стрим в Flussonic
-        const flussonicUrl = `http://192.168.1.76:8888/streamer/api/v3/streams/${uid}`
+        const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
+
         const flussonicHeaders = {
-            'accept': 'application/json',
-            'authorization': 'Basic cm9vdDpjdmRZUDc4YQ=='
+            accept: 'application/json',
+            authorization: authHeader
         }
 
-        const flussonicResponse = await axios.delete(flussonicUrl, { headers: flussonicHeaders })
+        const flussonicResponse = await axios.delete(flussonicUrl, {headers: flussonicHeaders})
 
         if (flussonicResponse.status >= 400) {
             throw new Error(`Flussonic ошибка при удалении стрима: ${flussonicResponse.status}`)
@@ -273,11 +296,11 @@ router.delete('/:id', async (req, res) => {
         await connection.query('DELETE FROM webcam WHERE id = ?', [req.params.id])
 
         await connection.commit()
-        res.json({ message: 'Камера удалена и стрим в Flussonic тоже' })
+        res.json({message: 'Камера удалена и стрим в Flussonic тоже'})
     } catch (err) {
         await connection.rollback()
         console.error('Ошибка при удалении камеры или Flussonic:', err.message)
-        res.status(500).json({ error: 'Ошибка при удалении. Проверь Flussonic.' })
+        res.status(500).json({error: 'Ошибка при удалении. Проверь Flussonic.'})
     } finally {
         connection.release()
     }

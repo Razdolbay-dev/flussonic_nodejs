@@ -1,5 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getCdnUrl } from '@/api/settings.js'
+import { getWebcams } from '@/api/webcams.js'
 
 const webcams = ref([])
 const activeStreams = ref({}) // Состояние показа iframe для каждого потока
@@ -7,9 +9,19 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const totalItems = ref(0)
 const selectedAddressId = ref('')
+const cdnUrl = ref('') // Для хранения cdn_url
 
-import { getWebcams } from '@/api/webcams.js'
+// Загрузка cdn_url
+const loadCdnUrl = async () => {
+  try {
+    const { data } = await getCdnUrl()
+    cdnUrl.value = data.cdnUrl // Сохраняем cdn_url
+  } catch (err) {
+    console.error('Ошибка при получении cdn_url:', err)
+  }
+}
 
+// Загрузка списка камер
 const loadWebcams = async () => {
   const params = {
     page: currentPage.value,
@@ -20,8 +32,8 @@ const loadWebcams = async () => {
   }
 
   const { data } = await getWebcams(params)
-  webcams.value = data.items;
-  totalItems.value = webcams.value.length;
+  webcams.value = data.items
+  totalItems.value = webcams.value.length
 
   // Инициализация состояний отображения потоков
   webcams.value.forEach((cam) => {
@@ -51,7 +63,12 @@ const nextPage = () => {
   }
 }
 
-onMounted(loadWebcams)
+// Загружаем cdn_url при монтировании
+onMounted(() => {
+  loadWebcams()
+  loadCdnUrl() // Загружаем cdn_url
+})
+
 </script>
 
 <template>
@@ -69,7 +86,7 @@ onMounted(loadWebcams)
           <div v-if="!activeStreams[cam.uid]" class="relative">
             <img
                 class="rounded-md w-full h-full object-cover"
-                :src="`http://192.168.1.76:8888/${cam.uid}/preview.jpg`"
+                :src="`${cdnUrl}/${cam.uid}/preview.jpg`"
                 alt="Stream Preview"
             />
             <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
@@ -83,7 +100,7 @@ onMounted(loadWebcams)
           <iframe
               v-else
               class="rounded-md w-full h-full"
-              :src="`http://192.168.1.76:8888/${cam.uid}/embed.html?autoplay=true`"
+              :src="`${cdnUrl}/${cam.uid}/embed.html?autoplay=true`"
               allowfullscreen
           ></iframe>
         </div>

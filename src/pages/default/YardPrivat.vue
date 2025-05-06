@@ -1,10 +1,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getPrivateWebcams } from '@/api/webcams.js' // Импорт нового метода
+import { getCdnUrl } from '@/api/settings.js'
 
 const webcams = ref([])
 const activeStreams = ref({})
 const error = ref(null)
+const cdnUrl = ref('') // Для хранения cdn_url
+
+// Загрузка cdn_url
+const loadCdnUrl = async () => {
+  try {
+    const { data } = await getCdnUrl()
+    cdnUrl.value = data.cdnUrl // Сохраняем cdn_url
+  } catch (err) {
+    console.error('Ошибка при получении cdn_url:', err)
+  }
+}
 
 const loadPrivateWebcams = async () => {
   try {
@@ -30,7 +42,11 @@ const toggleStream = (uid) => {
   activeStreams.value[uid] = true
 }
 
-onMounted(loadPrivateWebcams)
+onMounted(() => {
+  loadPrivateWebcams()
+  loadCdnUrl() // Загружаем cdn_url
+})
+
 </script>
 
 <template>
@@ -51,7 +67,7 @@ onMounted(loadPrivateWebcams)
           <div v-if="!activeStreams[cam.uid]" class="relative">
             <img
                 class="rounded-md w-full h-full object-cover"
-                :src="`http://192.168.1.76:8888/${cam.uid}/preview.jpg`"
+                :src="`${cdnUrl}/${cam.uid}/preview.jpg`"
                 alt="Stream Preview"
             />
             <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
@@ -64,7 +80,7 @@ onMounted(loadPrivateWebcams)
           <iframe
               v-else
               class="rounded-md w-full h-full"
-              :src="`http://192.168.1.76:8888/${cam.uid}/embed.html?autoplay=true`"
+              :src="`${cdnUrl}/${cam.uid}/embed.html?autoplay=true`"
               allowfullscreen
           ></iframe>
         </div>
