@@ -7,7 +7,6 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 
 import Home from '@/pages/default/Home.vue'
 import About from '@/pages/default/About.vue'
-import Yard from '@/pages/default/Yard.vue'
 import LoginView from '@/pages/Login.vue'
 import AllWebCams from '@/pages/default/AllWebCams.vue'
 import YardPrivat from '@/pages/default/YardPrivat.vue'
@@ -25,14 +24,12 @@ import WebcamDetail from '@/components/WebcamDetail.vue'
 import TmpRegister from '@/pages/TmpRegister.vue'
 
 const routes = [
-
     {
         path: '/',
         component: DefaultLayout,
         children: [
             { path: '', name: 'Home', component: Home },
             { path: 'about', name: 'About', component: About },
-            { path: 'yard', name: 'Yard', component: Yard },
             { path: 'private_yard', name: 'YardPrivat', component: YardPrivat },
             { path: 'allcams', name: 'AllWebCams', component: AllWebCams, meta: { requiresPrivileged: true }, },
             { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },

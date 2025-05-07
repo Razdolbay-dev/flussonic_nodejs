@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-
+import { autoAuthByIP } from './middleware/autoAuthByIPMiddleware.js'
 import { protectNonGetRequests } from './middleware/authMiddleware.js';
 
 import addressesRouter from './routes/addresses.js';
@@ -24,7 +24,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/flussonic', flussonicRouter); // 👈 Flussonic должен иметь доступ без авторизации
 
 // ❗️ Middleware авторизации для всех, кроме auth
-app.use(protectNonGetRequests);
+app.use(autoAuthByIP) // ← сначала автоматическая авторизация
+app.use(protectNonGetRequests) // ← потом проверка прав
 
 // ✅ Защищённые маршруты
 app.use('/api/addresses', addressesRouter);
