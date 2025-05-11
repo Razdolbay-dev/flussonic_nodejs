@@ -6,8 +6,6 @@ import {requireAuth} from '../middleware/requireAuth.js'
 
 const router = express.Router()
 
-// Получить все камеры
-// GET /api/webcams
 router.get('/', async (req, res) => {
     const {address_id, page = 1, limit = 10} = req.query
     const offset = (parseInt(page) - 1) * parseInt(limit)
@@ -109,8 +107,6 @@ router.get('/private', requireAuth, async (req, res) => {
     }
 })
 
-// Получить одну камеру
-// GET /api/webcams/:id
 router.get('/:id', async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -132,13 +128,13 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// Создать новую камеру
 router.post('/', async (req, res) => {
     const {uid, name, url, dvr_id, address_id, role, day_count} = req.body
     const connection = await db.getConnection()
 
     try {
         const {cdnUrl, authHeader, templates} = await getFlussonicSettings()
+
         const templateName = role === 'private' ? templates.private : templates.public
 
         await connection.beginTransaction()
@@ -147,7 +143,6 @@ router.post('/', async (req, res) => {
         const [[dvrRow]] = await connection.query('SELECT path FROM dvr WHERE id = ?', [dvr_id])
         if (!dvrRow || !dvrRow.path) throw new Error('DVR path not найден')
 
-
         const [result] = await connection.query(
             `INSERT INTO webcam (uid, name, url, dvr_id, address_id, role, day_count)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -155,13 +150,14 @@ router.post('/', async (req, res) => {
         )
 
         const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
+
         const flussonicPayload = {
-            inputs: [{url}],
-            title: name,
+            inputs: [{ url: String(url) }],
+            title: String(name),
             template: templateName,
             dvr: {
-                root: dvrRow.path,
-                dvr_limit: day_count.toString()
+                root: String(dvrRow.path),
+                dvr_limit: Number(day_count)
             }
         }
 
@@ -186,7 +182,6 @@ router.post('/', async (req, res) => {
     }
 })
 
-// Обновить камеру
 router.put('/:id', async (req, res) => {
     const { uid, name, url, dvr_id, address_id, role, day_count } = req.body
     const connection = await db.getConnection()
@@ -259,8 +254,6 @@ router.put('/:id', async (req, res) => {
     }
 })
 
-
-// Удалить камеру
 router.delete('/:id', async (req, res) => {
     const connection = await db.getConnection()
 

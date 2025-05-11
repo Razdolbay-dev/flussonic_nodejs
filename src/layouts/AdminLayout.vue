@@ -7,6 +7,11 @@ function logout() {
   store.logout()
 }
 
+// Функция для закрытия меню
+const closeMenu = () => {
+  isOpen.value = false
+}
+
 const isOpen = ref(false);
 
 const toggleMenu = () => {
@@ -53,14 +58,14 @@ const toggleMenu = () => {
 
       <!-- Выпадающее меню на мобильной версии -->
       <div v-if="isOpen" class="sm:hidden mt-4 space-y-2 text-center bg-white rounded-md">
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/dashboard">Главная</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/webcams">Камеры</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/addresses">Адреса</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/dvrs">Хранилища</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/temp-clients">Временные клиенты</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/users">Пользователи</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/settings">Настройки</router-link>
-        <router-link class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="#">
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/dashboard">Главная</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/webcams">Камеры</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/addresses">Адреса</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/dvrs">Хранилища</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/temp-clients">Временные клиенты</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/users">Пользователи</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin/settings">Настройки</router-link>
+        <router-link @click="closeMenu" class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="#">
           <button @click="logout" class="py-1 text-red-500 hover:underline">Выйти</button>
         </router-link>
 

@@ -6,20 +6,19 @@ import { db } from '../config/db.js';
 const router = express.Router();
 
 router.get('/auto-login', async (req, res) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    console.log(clientIP);
 
     try {
-        const [users] = await db.query('SELECT * FROM users WHERE ip = ?', [ip]);
+        const [users] = await db.query('SELECT * FROM users WHERE ip = ?', [clientIP]);
         const user = users[0];
-        if (!user) return res.status(401).json({ message: 'Пользователь не найден по IP' });
+
+        if (!user) {
+            return res.status(401).json({ message: 'IP не найден в базе' });
+        }
 
         const token = jwt.sign(
-            {
-                id: user.id,
-                name: user.name,
-                role: user.role,
-                origin: 'auto'
-            },
+            { id: user.id, name: user.name, role: user.role, origin: 'perm' },
             process.env.TOKEN_SECRET_KEY,
             { expiresIn: '1h' }
         );
@@ -27,7 +26,6 @@ router.get('/auto-login', async (req, res) => {
         await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
 
         res.json({ token, role: user.role });
-
     } catch (err) {
         console.error('Ошибка автоавторизации:', err);
         res.status(500).json({ message: 'Ошибка сервера' });
@@ -36,6 +34,8 @@ router.get('/auto-login', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     const { name, password } = req.body;
+
+    console.log(name, password);
 
     try {
         const [users] = await db.query('SELECT * FROM users WHERE name = ?', [name]);
@@ -93,7 +93,7 @@ router.post('/tmp-login', async (req, res) => {
         )
 
 
-        await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
+        await db.query('UPDATE clients_tmp SET token = ? WHERE id = ?', [token, user.id]);
 
         res.json({ token });
     } catch (err) {

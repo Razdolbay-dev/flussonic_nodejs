@@ -1,5 +1,5 @@
 // server/utils/getFlussonicSettings.js
-import { db } from '../config/db.js'
+import { db } from './db.js'
 
 export const getFlussonicSettings = async () => {
     const [rows] = await db.query('SELECT * FROM settings LIMIT 1')

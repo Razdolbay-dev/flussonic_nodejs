@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen flex items-center justify-center bg-gray-100">
-    <div v-if="!loading">
       <div class="bg-white p-6 rounded-lg shadow-md w-96">
         <div class="flex mb-4 border-b">
           <button
@@ -68,22 +67,18 @@
           Как получить временный доступ?
         </a>
       </div>
-    </div>
-    <div v-else class="text-center text-gray-600 py-10">
-      🔐 Проверка авторизации...
-    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { useRouter } from 'vue-router'
 import axios from '@/api/axios.js'
 
 const store = useAuthStore()
 const router = useRouter()
-const loading = ref(true)
 
 const activeTab = ref('login') // 'login' или 'temp'
 
@@ -91,15 +86,6 @@ const name = ref('')
 const phone = ref('')
 const password = ref('')
 const error = ref('')
-
-onMounted(async () => {
-  const success = await store.autoLogin()
-  loading.value = false
-
-  if (success) {
-    router.push(store.role !== 'user' ? '/admin' : '/')
-  }
-})
 
 const loginByName = async () => {
   try {

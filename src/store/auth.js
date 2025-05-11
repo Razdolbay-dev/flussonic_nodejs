@@ -8,10 +8,14 @@ export const useAuthStore = defineStore('auth', {
     }),
     actions: {
         setAuth(token, role) {
-            this.token = token
-            this.role = role
-            localStorage.setItem('token', token)
-            localStorage.setItem('role', role)
+            if (token) {
+                this.token = token
+                localStorage.setItem('token', token)
+            }
+            if (role) {
+                this.role = role
+                localStorage.setItem('role', role)
+            }
         },
         logout() {
             this.token = null
@@ -21,21 +25,9 @@ export const useAuthStore = defineStore('auth', {
             if (router) {
                 router.push('/')
             }
-        },
-        autoLogin: async function () {
-            try {
-                const res = await fetch('/api/auth/auto-login');
-                if (!res.ok) throw new Error('Нет авторизации');
-
-                const data = await res.json();
-                this.setAuth(data.token, data.role);
-
-                return true;
-            } catch (err) {
-                console.warn('🔁 Автоавторизация не удалась:', err.message);
-                return false;
-            }
         }
     },
-
+    getters: {
+        isAuthenticated: (state) => !!state.token,
+    }
 })
