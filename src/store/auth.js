@@ -22,5 +22,20 @@ export const useAuthStore = defineStore('auth', {
                 router.push('/')
             }
         },
+        autoLogin: async function () {
+            try {
+                const res = await fetch('/api/auth/auto-login');
+                if (!res.ok) throw new Error('Нет авторизации');
+
+                const data = await res.json();
+                this.setAuth(data.token, data.role);
+
+                return true;
+            } catch (err) {
+                console.warn('🔁 Автоавторизация не удалась:', err.message);
+                return false;
+            }
+        }
     },
+
 })

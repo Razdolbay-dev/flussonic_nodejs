@@ -33,8 +33,8 @@ const routes = [
             { path: 'private_yard', name: 'YardPrivat', component: YardPrivat },
             { path: 'allcams', name: 'AllWebCams', component: AllWebCams, meta: { requiresPrivileged: true }, },
             { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
-            { path: '/login', component: LoginView },
-            { path: '/register', name: 'TmpRegister', component: TmpRegister },
+            { path: 'login', component: LoginView },
+            { path: 'register', name: 'TmpRegister', component: TmpRegister },
         ],
     },
     {
