@@ -90,3 +90,48 @@ privt VARCHAR(255)
 );
 
 ```
+
+Конфиг Flussonic
+```angular2html
+# Global settings:
+http 88;
+geoip RU;
+rtsp 554;
+rtmp 1935;
+pulsedb /var/lib/flussonic;
+session_log /var/lib/flussonic;
+edit_auth root kjifHm11.06!;
+auth_backend Nodejs {
+  backend http://app.local/api/flussonic/auth;
+}
+
+# DVRs:
+
+# Remote sources:
+
+# Balancer:
+
+# Stream templates:
+template _pubcam {
+  thumbnails;
+  protocols -dash -m4f -m4s -mss -rtmp -rtsp -tshttp;
+}
+template _privcam {
+  on_play auth://Nodejs;
+  thumbnails;
+  protocols -dash -m4f -m4s -mss -rtmp -tshttp;
+}
+
+# Ingest streams:
+
+# Disk file caches:
+
+# VOD locations:
+
+# DVB cards:
+
+# Components:
+iptv;
+
+
+```
