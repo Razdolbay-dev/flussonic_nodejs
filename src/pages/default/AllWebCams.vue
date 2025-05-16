@@ -1,15 +1,19 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed} from 'vue'
 import { getCdnUrl } from '@/api/settings.js'
 import { getWebcams } from '@/api/webcams.js'
+import { useAuthStore } from "@/store/auth.js";
 
 const webcams = ref([])
 const activeStreams = ref({}) // Состояние показа iframe для каждого потока
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(12)
 const totalItems = ref(0)
 const selectedAddressId = ref('')
 const cdnUrl = ref('') // Для хранения cdn_url
+const authStore = useAuthStore()
+
+const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 
 // Загрузка cdn_url
 const loadCdnUrl = async () => {
@@ -33,7 +37,7 @@ const loadWebcams = async () => {
 
   const { data } = await getWebcams(params)
   webcams.value = data.items
-  totalItems.value = webcams.value.length
+  totalItems.value = data.total
 
   // Инициализация состояний отображения потоков
   webcams.value.forEach((cam) => {
@@ -41,6 +45,19 @@ const loadWebcams = async () => {
       activeStreams.value[cam.uid] = false
     }
   })
+}
+
+const getPreviewUrl = (uid) => {
+  const token = authStore.token
+  const base = `${cdnUrl.value}/${uid}/preview.jpg`
+  return token ? `${base}?token=${token}` : base
+}
+
+// Получение URL для потока (с токеном, если пользователь авторизован)
+const getStreamUrl = (uid) => {
+  const token = authStore.token
+  const baseEmbedUrl = `${cdnUrl.value}/${uid}/embed.html?autoplay=true`
+  return token ? `${baseEmbedUrl}&token=${token}` : baseEmbedUrl
 }
 
 // Переключение на iframe при клике
@@ -86,7 +103,7 @@ onMounted(() => {
           <div v-if="!activeStreams[cam.uid]" class="relative">
             <img
                 class="rounded-md w-full h-full object-cover"
-                :src="`${cdnUrl}/${cam.uid}/preview.jpg`"
+                :src="getPreviewUrl(cam.uid)"
                 alt="Stream Preview"
             />
             <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md">
@@ -100,7 +117,7 @@ onMounted(() => {
           <iframe
               v-else
               class="rounded-md w-full h-full"
-              :src="`${cdnUrl}/${cam.uid}/embed.html?autoplay=true`"
+              :src="getStreamUrl(cam.uid)"
               allowfullscreen
           ></iframe>
         </div>
@@ -112,15 +129,28 @@ onMounted(() => {
     </div>
 
     <!-- Пагинация -->
-    <div class="flex justify-center mt-6 space-x-4">
-      <button @click="prevPage" :disabled="currentPage === 1" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50">
+    <div class="flex justify-center mt-6 space-x-4 items-center">
+      <button
+          @click="prevPage"
+          :disabled="currentPage === 1"
+          class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+      >
         Назад
       </button>
-      <span class="self-center">Страница {{ currentPage }}</span>
-      <button @click="nextPage" :disabled="currentPage * pageSize >= totalItems" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50">
+
+      <span class="text-gray-700">
+    Страница {{ currentPage }} из {{ totalPages }}
+  </span>
+
+      <button
+          @click="nextPage"
+          :disabled="currentPage >= totalPages"
+          class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+      >
         Далее
       </button>
     </div>
+
   </div>
 </template>
 

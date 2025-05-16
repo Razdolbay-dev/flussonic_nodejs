@@ -15,3 +15,6 @@ export const getPrivateWebcams = (token) => {
         }
     })
 }
+export const getPublicWebcams = (params) => {
+    return axios.get('/webcams/public', { params })
+}

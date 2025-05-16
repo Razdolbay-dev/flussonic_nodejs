@@ -4,12 +4,12 @@ import { ref, onMounted } from 'vue'
 const webcams = ref([])
 const activeStreams = ref({}) // Состояние показа iframe для каждого потока
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(12)
 const totalItems = ref(0)
 const selectedAddressId = ref('')
 const cdnUrl = ref('') // Для хранения cdn_url
 
-import { getWebcams } from '@/api/webcams.js'
+import { getPublicWebcams } from '@/api/webcams.js'
 import { getCdnUrl } from '@/api/settings.js'
 
 // Загрузка cdn_url
@@ -31,9 +31,9 @@ const loadWebcams = async () => {
     params.address_id = selectedAddressId.value
   }
 
-  const { data } = await getWebcams(params)
-  webcams.value = data.items.filter(cam => cam.role === 'public');
-  totalItems.value = webcams.value.length;
+  const { data } = await getPublicWebcams(params)
+  webcams.value = data.items
+  totalItems.value = data.total
 
   // Инициализация состояний отображения потоков
   webcams.value.forEach((cam) => {

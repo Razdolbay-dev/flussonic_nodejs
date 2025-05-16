@@ -29,7 +29,7 @@
               {{ cam.name }}
             </router-link>
           </h2>
-
+          <p class="text-sm text-gray-600">Статус: {{ cam.role }}</p>
           <p class="text-sm text-gray-600">Хранение: {{ formatDayCount(cam.day_count) }}</p>
           <p class="text-sm text-gray-600">
             Адрес:
@@ -38,16 +38,40 @@
 
         </div>
         <div class="mt-4 flex justify-between gap-2">
-          <button @click="openModal(cam)" class="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
+          <button @click="openModal(cam)"
+                  class="text-sm bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
             Редактировать
           </button>
           <button @click="deleteCam(cam.id)" class="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
             Удалить
           </button>
         </div>
+
+
       </div>
     </div>
+    <!-- Пагинация -->
+    <div class="flex justify-center items-center mt-8 gap-4">
+      <button
+          @click="prevPage"
+          :disabled="currentPage === 1"
+          class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+      >
+        Назад
+      </button>
 
+      <span class="text-gray-700">
+    Страница {{ currentPage }} из {{ totalPages }}
+  </span>
+
+      <button
+          @click="nextPage"
+          :disabled="currentPage >= totalPages"
+          class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+      >
+        Вперёд
+      </button>
+    </div>
     <!-- Модальное окно -->
     <transition name="fade">
       <div v-if="isModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -66,9 +90,8 @@
             />
 
 
-            <input v-model="form.name" placeholder="Название" class="border p-2 w-full rounded" required />
-            <input v-model="form.url" placeholder="Ссылка на камеру" class="border p-2 w-full rounded" required />
-
+            <input v-model="form.name" placeholder="Название" class="border p-2 w-full rounded" required/>
+            <input v-model="form.url" placeholder="Ссылка на камеру" class="border p-2 w-full rounded" required/>
 
 
             <select v-model="form.address_id" class="border p-2 w-full rounded" required>
@@ -112,15 +135,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import {
   getWebcams,
   createWebcam,
   updateWebcam,
   deleteWebcam
 } from '@/api/webcams.js'
-import { getAddresses } from '@/api/addresses.js'
-import { getDvrs } from '@/api/dvr.js'
+import {getAddresses} from '@/api/addresses.js'
+import {getDvrs} from '@/api/dvr.js'
 
 const webcams = ref([])
 const addresses = ref([])
@@ -132,6 +155,7 @@ const editingCam = ref(null)
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalItems = ref(0);
+const totalPages = computed(() => Math.ceil(totalItems.value / pageSize.value))
 
 const selectedAddressId = ref('');
 
@@ -146,14 +170,14 @@ const form = reactive({
 })
 
 const dayOptions = [
-  { label: '1 день', value: 86400 },
-  { label: '2 дня', value: 86400 * 2 },
-  { label: '3 дня', value: 86400 * 3 },
-  { label: '5 дней', value: 86400 * 5 },
-  { label: '1 неделя', value: 86400 * 7 },
-  { label: '2 недели', value: 86400 * 14 },
-  { label: '3 недели', value: 86400 * 21 },
-  { label: '1 месяц', value: 86400 * 30 }
+  {label: '1 день', value: 86400},
+  {label: '2 дня', value: 86400 * 2},
+  {label: '3 дня', value: 86400 * 3},
+  {label: '5 дней', value: 86400 * 5},
+  {label: '1 неделя', value: 86400 * 7},
+  {label: '2 недели', value: 86400 * 14},
+  {label: '3 недели', value: 86400 * 21},
+  {label: '1 месяц', value: 86400 * 30}
 ]
 
 const formatDayCount = (seconds) => {
@@ -162,6 +186,8 @@ const formatDayCount = (seconds) => {
 }
 
 const loadWebcams = async () => {
+  if (currentPage.value < 1) currentPage.value = 1
+
   const params = {
     page: currentPage.value,
     limit: pageSize.value,
@@ -174,6 +200,12 @@ const loadWebcams = async () => {
   webcams.value = data.items;
   totalItems.value = data.total;
 };
+
+watch(selectedAddressId, () => {
+  currentPage.value = 1;
+  loadWebcams();
+});
+
 
 const generateUid = () => {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -200,9 +232,9 @@ const openModal = (cam = null) => {
 
 const handleSubmit = async () => {
   if (editingCam.value) {
-    await updateWebcam(editingCam.value.id, { ...form })
+    await updateWebcam(editingCam.value.id, {...form})
   } else {
-    await createWebcam({ ...form })
+    await createWebcam({...form})
   }
   await loadWebcams()
   isModalOpen.value = false

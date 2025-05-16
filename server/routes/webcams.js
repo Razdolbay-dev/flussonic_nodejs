@@ -107,6 +107,52 @@ router.get('/private', requireAuth, async (req, res) => {
     }
 })
 
+// GET /webcams/public — публичные камеры с пагинацией и фильтрацией
+router.get('/public', async (req, res) => {
+    const { address_id, page = 1, limit = 10 } = req.query
+    const offset = (parseInt(page) - 1) * parseInt(limit)
+    const params = []
+    let whereClause = 'WHERE w.role = "public"'
+
+    if (address_id) {
+        whereClause += ' AND w.address_id = ?'
+        params.push(address_id)
+    }
+
+    try {
+        const sql = `
+            SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
+            FROM webcam w
+            LEFT JOIN dvr d ON w.dvr_id = d.id
+            LEFT JOIN addresses a ON w.address_id = a.id
+            ${whereClause}
+            ORDER BY w.id DESC
+            LIMIT ?
+            OFFSET ?
+        `
+        params.push(parseInt(limit), offset)
+
+        const countSql = `
+            SELECT COUNT(*) AS total
+            FROM webcam w
+            LEFT JOIN dvr d ON w.dvr_id = d.id
+            LEFT JOIN addresses a ON w.address_id = a.id
+            ${whereClause}
+        `
+
+        const [[countRow]] = await db.query(countSql, address_id ? [address_id] : [])
+        const [cams] = await db.query(sql, params)
+
+        res.json({
+            items: cams,
+            total: countRow.total
+        })
+    } catch (err) {
+        console.error('Ошибка при получении публичных камер:', err)
+        res.status(500).json({ error: 'Ошибка сервера' })
+    }
+})
+
 router.get('/:id', async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -190,26 +236,31 @@ router.put('/:id', async (req, res) => {
         const { cdnUrl, authHeader, templates } = await getFlussonicSettings()
         const templateName = role === 'private' ? templates.private : templates.public
 
-        // 1. Начинаем транзакцию
         await connection.beginTransaction()
 
-        // 2. Получаем старый DVR путь
-        const [[oldRow]] = await connection.query(`
-            SELECT d.path AS old_path
+        // Получаем старые данные камеры
+        const [[oldCam]] = await connection.query(`
+            SELECT w.uid, w.name, w.url, w.dvr_id, w.address_id, w.role, w.day_count, d.path AS dvr_path
             FROM webcam w
-            LEFT JOIN dvr d ON w.dvr_id = d.id
+                     LEFT JOIN dvr d ON w.dvr_id = d.id
             WHERE w.id = ?
         `, [req.params.id])
-        if (!oldRow?.old_path) throw new Error('Не удалось получить старый DVR путь')
+        if (!oldCam) throw new Error('Камера не найдена')
 
-        // 3. Получаем новый DVR путь
-        const [[newRow]] = await connection.query('SELECT path FROM dvr WHERE id = ?', [dvr_id])
-        if (!newRow?.path) throw new Error('Новый DVR путь не найден')
+        // Получаем новый путь DVR
+        const [[newDvr]] = await connection.query('SELECT path FROM dvr WHERE id = ?', [dvr_id])
+        if (!newDvr?.path) throw new Error('Новый DVR путь не найден')
 
-        const oldPath = oldRow.old_path
-        const newPath = newRow.path
+        const isChanged =
+            oldCam.uid !== uid ||
+            oldCam.name !== name ||
+            oldCam.url !== url ||
+            oldCam.dvr_id !== dvr_id ||
+            oldCam.address_id !== address_id ||
+            oldCam.role !== role ||
+            oldCam.day_count !== day_count
 
-        // 4. Обновляем камеру в БД
+        // Обновляем в БД всегда
         await connection.query(
             `UPDATE webcam
              SET uid = ?, name = ?, url = ?, dvr_id = ?, address_id = ?, role = ?, day_count = ?
@@ -217,32 +268,35 @@ router.put('/:id', async (req, res) => {
             [uid, name, url, dvr_id, address_id, role, day_count, req.params.id]
         )
 
-        // 5. Обновляем стрим в Flussonic, если DVR путь изменился
-        if (oldPath !== newPath) {
+        // Только если что-то поменялось — обновляем Flussonic
+        if (isChanged) {
             const flussonicUrl = `${cdnUrl}/streamer/api/v3/streams/${uid}`
+
             const flussonicPayload = {
                 inputs: [{ url }],
                 title: name,
                 template: templateName,
                 dvr: {
-                    root: newPath,
-                    dvr_limit: day_count.toString()
+                    root: newDvr.path,
+                    dvr_limit: Number(day_count)
                 }
             }
 
             const flussonicHeaders = {
                 accept: 'application/json',
+                'content-type': 'application/json',
                 authorization: authHeader
             }
 
-            const response = await axios.put(flussonicUrl, flussonicPayload, { headers: flussonicHeaders })
+            const response = await axios.put(flussonicUrl, flussonicPayload, {
+                headers: flussonicHeaders
+            })
 
             if (response.status >= 400) {
                 throw new Error(`Flussonic вернул ошибку: ${response.status}`)
             }
         }
 
-        // 6. Успешное завершение транзакции
         await connection.commit()
         res.json({ message: 'Камера обновлена' })
     } catch (err) {
@@ -253,6 +307,7 @@ router.put('/:id', async (req, res) => {
         connection.release()
     }
 })
+
 
 router.delete('/:id', async (req, res) => {
     const connection = await db.getConnection()
