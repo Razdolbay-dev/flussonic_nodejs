@@ -1,10 +1,13 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
 import { db } from '../config/db.js';
-import { protectStrict } from '../middleware/authMiddleware.js'
+import { protectStrict } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
+const SALT_ROUNDS = 10;
 
 // Получить всех пользователей
-router.get('/', protectStrict,async (req, res) => {
+router.get('/', protectStrict, async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT users.*,
@@ -38,9 +41,11 @@ router.post('/', async (req, res) => {
             return res.status(409).json({ error: 'Пользователь с таким именем или токеном уже существует' });
         }
 
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
         const [result] = await db.query(
             'INSERT INTO users (name, password, ip, address_id, token, role) VALUES (?, ?, ?, ?, ?, ?)',
-            [name, password, ip, address_id, token, role]
+            [name, hashedPassword, ip, address_id, token, role]
         );
 
         res.status(201).json({ id: result.insertId });
@@ -59,9 +64,11 @@ router.put('/:id', async (req, res) => {
     }
 
     try {
+        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
         const [result] = await db.query(
             'UPDATE users SET name = ?, password = ?, ip = ?, address_id = ?, token = ?, role = ? WHERE id = ?',
-            [name, password, ip, address_id, token, role, req.params.id]
+            [name, hashedPassword, ip, address_id, token, role, req.params.id]
         );
 
         if (result.affectedRows === 0) {

@@ -35,14 +35,13 @@ router.get('/auto-login', async (req, res) => {
 router.post('/login', async (req, res) => {
     const { name, password } = req.body;
 
-    console.log(name, password);
-
     try {
         const [users] = await db.query('SELECT * FROM users WHERE name = ?', [name]);
         const user = users[0];
         if (!user) return res.status(401).json({ message: 'Пользователь не найден' });
 
-        const isMatch = password === user.password;
+        const isMatch = await bcrypt.compare(password, user.password);
+
         if (!isMatch) return res.status(401).json({ message: 'Не верный пароль' });
 
         const token = jwt.sign(
@@ -78,7 +77,7 @@ router.post('/tmp-login', async (req, res) => {
             return res.status(403).json({ message: 'Доступ только для временных пользователей' });
         }
 
-        const isMatch = password === user.password;
+        const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(401).json({ message: 'Неверный пароль' });
 
         const token = jwt.sign(
@@ -117,7 +116,8 @@ router.post('/tmp-register', async (req, res) => {
             [phone]
         );
 
-        const password = Math.random().toString().slice(2, 10);
+        const plainPassword = Math.random().toString().slice(2, 10);
+        const password = await bcrypt.hash(plainPassword, 10);
         const token = Math.random().toString(36).substring(2, 22);
         const msInDay = 86400000;
         const now = new Date();
@@ -209,7 +209,7 @@ router.post('/tmp-register', async (req, res) => {
         res.status(201).json({
             message: 'Временный доступ успешно выдан',
             token,
-            password
+            password: plainPassword // ← вот это надо вернуть клиенту
         });
 
     } catch (err) {
