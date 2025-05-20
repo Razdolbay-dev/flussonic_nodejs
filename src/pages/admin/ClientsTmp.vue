@@ -67,6 +67,12 @@
           <form @submit.prevent="handleSubmit" class="space-y-3">
             <input v-model="form.fio" placeholder="ФИО" class="border p-2 w-full rounded" required />
             <input v-model="form.phone" placeholder="Телефон" class="border p-2 w-full rounded" />
+            <input
+                v-model="form.password"
+                type="password"
+                placeholder="Пароль (оставьте пустым, чтобы не менять)"
+                class="border p-2 w-full rounded"
+            />
 
             <!-- Выбор адресов -->
             <div class="border rounded p-3">
@@ -182,8 +188,11 @@ const openModal = (client = null) => {
 
   form.fio = client?.fio || ''
   form.phone = client?.phone || ''
+  form.password = ''
   form.address_ids = client?.addresses?.map(a => a.address_id) || []
-  form.access_until = client?.access_until || calculateAccessUntil()
+  form.access_until = client?.access_until
+      ? new Date(client.access_until).toISOString().slice(0, 19).replace('T', ' ')
+      : calculateAccessUntil()
 
   selectedAddressId.value = ''
   accessDays.value = 1
@@ -201,6 +210,10 @@ const handleSubmit = async () => {
   const payload = {
     ...form,
     addresses: form.address_ids.map(id => ({ address_id: id }))
+  }
+
+  if (form.password) {
+    payload.password = form.password
   }
 
   if (editingClient.value) {
@@ -248,7 +261,8 @@ const filteredAddresses = computed(() => {
 const calculateAccessUntil = () => {
   const msInDay = 86400000
   const days = Math.min(accessDays.value || 1, 7)
-  return new Date(Date.now() + (days * msInDay)).toISOString()
+  const d = new Date(Date.now() + (days * msInDay));
+  return d.toISOString().slice(0, 19).replace('T', ' ');
 }
 
 onMounted(async () => {

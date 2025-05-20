@@ -55,7 +55,7 @@
           </h2>
           <form @submit.prevent="handleSubmit" class="space-y-3">
             <input v-model="form.name" placeholder="Имя" class="border p-2 w-full rounded" required />
-            <input v-model="form.password" placeholder="Пароль" class="border p-2 w-full rounded" required />
+            <input v-model="form.password" placeholder="Пароль" type="password" class="border p-2 w-full rounded" required />
             <input v-model="form.ip" placeholder="IP" class="border p-2 w-full rounded" required />
 
             <select v-model="form.role" class="border p-2 w-full rounded" required>

@@ -64,16 +64,28 @@ router.put('/:id', async (req, res) => {
     }
 
     try {
-        const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-        const [result] = await db.query(
-            'UPDATE users SET name = ?, password = ?, ip = ?, address_id = ?, token = ?, role = ? WHERE id = ?',
-            [name, hashedPassword, ip, address_id, token, role, req.params.id]
-        );
-
-        if (result.affectedRows === 0) {
+        // Получаем текущего пользователя из БД
+        const [users] = await db.query('SELECT password FROM users WHERE id = ?', [req.params.id]);
+        if (users.length === 0) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
+
+        const currentPasswordHash = users[0].password;
+
+        let finalPassword;
+        if (password === currentPasswordHash) {
+            // Пароль не изменился
+            finalPassword = currentPasswordHash;
+        } else {
+            // Пароль был изменён — хэшируем новый
+            finalPassword = await bcrypt.hash(password, SALT_ROUNDS);
+        }
+
+        // Выполняем обновление
+        const [result] = await db.query(
+            'UPDATE users SET name = ?, password = ?, ip = ?, address_id = ?, token = ?, role = ? WHERE id = ?',
+            [name, finalPassword, ip, address_id, token, role, req.params.id]
+        );
 
         res.json({ message: 'Пользователь обновлён' });
     } catch (error) {

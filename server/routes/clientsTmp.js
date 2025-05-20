@@ -66,9 +66,11 @@ router.put('/:id', async (req, res) => {
     try {
         let hashedPassword;
 
+        // Если передан новый пароль — хэшируем
         if (password) {
             hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
         } else {
+            // Пароль не передан — используем старый
             const [rows] = await db.query('SELECT password FROM clients_tmp WHERE id = ?', [clientId]);
             if (rows.length === 0) {
                 return res.status(404).json({ error: 'Клиент не найден' });
