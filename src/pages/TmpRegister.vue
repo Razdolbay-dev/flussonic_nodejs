@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 flex items-center justify-center">
+  <div class="container w-[75%] min-h-screen bg-gray-100 flex items-center justify-center my-28 sm:my-0 my-0">
     <div class="grid md:grid-cols-2 gap-6 items-start">
       <!-- Инструкция слева -->
       <div class="text-gray-800 space-y-4 text-sm leading-relaxed">
@@ -32,6 +32,24 @@
       <form @submit.prevent="handleSubmit" class="space-y-4 border p-4 rounded-xl shadow bg-white">
         <input v-model="form.fio" placeholder="ФИО" class="border p-2 w-full rounded" required/>
         <input v-model="form.phone" placeholder="Телефон" class="border p-2 w-full rounded" required/>
+        <input
+            v-model="form.password"
+            type="password"
+            placeholder="Пароль"
+            class="border p-2 w-full rounded"
+            required
+        />
+
+        <input
+            v-model="form.confirmPassword"
+            type="password"
+            placeholder="Подтвердите пароль"
+            class="border p-2 w-full rounded"
+            required
+        />
+        <p v-if="form.password && form.confirmPassword && form.password !== form.confirmPassword" class="text-red-600 text-sm">
+          Пароли не совпадают
+        </p>
 
         <div class="border rounded p-3">
           <p class="font-semibold mb-2">Доступ к адресам</p>
@@ -80,9 +98,12 @@
 
         <button
             type="submit"
-            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition w-full"
+            :disabled="isSubmitting"
+            class="w-full px-4 py-2 rounded transition text-white
+         disabled:opacity-50 disabled:cursor-not-allowed
+         bg-blue-600 hover:bg-blue-700"
         >
-          Получить код
+          {{ isSubmitting ? 'Отправка...' : 'Получить код' }}
         </button>
       </form>
     </div>
@@ -146,6 +167,7 @@ import {getAddresses} from '@/api/addresses.js'
 import axios from '@/api/axios.js'
 import {useRouter} from 'vue-router'
 
+const isSubmitting = ref(false)
 const router = useRouter()
 const verificationModal = ref(false)
 const verificationCode = ref('')
@@ -156,8 +178,11 @@ const clientPhone = ref('') // ← сохраняем номер телефон�
 const form = reactive({
   fio: '',
   phone: '',
-  address_ids: []
+  address_ids: [],
+  password: '',
+  confirmPassword: ''
 })
+
 
 const selectedAddressId = ref('')
 const accessDays = ref(1)
@@ -197,20 +222,31 @@ const calculateAccessUntil = () => {
 }
 
 const handleSubmit = async () => {
+  isSubmitting.value = true
+
   try {
+    if (form.password !== form.confirmPassword) {
+      alert('Пароли не совпадают');
+      return;
+    }
+
     const res = await axios.post('/auth/tmp-register', {
       fio: form.fio,
       phone: form.phone,
       address_ids: form.address_ids,
-      access_days: accessDays.value
-    })
+      access_days: accessDays.value,
+      password: form.password
+    });
 
-    clientId.value = res.data.client_id // если нужен, пусть остаётся
-    clientPhone.value = form.phone      // сохраняем для отправки верификации
+
+    clientId.value = res.data.client_id
+    clientPhone.value = form.phone
     verificationModal.value = true
   } catch (err) {
     console.error(err)
     alert('Ошибка при регистрации')
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -221,7 +257,7 @@ const verifyCode = async () => {
       code: verificationCode.value           // ← передаём code
     })
 
-    generatedPassword.value = res.data.password
+    generatedPassword.value = form.password
     verificationModal.value = false
     successModal.value = true
     verificationError.value = ''
