@@ -42,8 +42,8 @@
             <button
                 type="button"
                 @click="addAddress"
-                :disabled="!selectedAddressId"
-                class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                :disabled="!selectedAddressId || form.address_ids.length >= 3"
+                class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 disabled:opacity-50"
             >
               Добавить
             </button>
@@ -231,11 +231,6 @@ const verifyCode = async () => {
     console.error(err)
     verificationError.value = 'Код введён неверно. Попробуйте ещё раз.'
   }
-}
-
-
-const copyToClipboard = () => {
-  navigator.clipboard.writeText(generatedPassword.value)
 }
 
 onMounted(loadAddresses)
