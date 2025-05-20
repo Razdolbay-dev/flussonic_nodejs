@@ -1,5 +1,5 @@
 <template>
-  <div class="container w-[75%] min-h-screen bg-gray-100 flex items-center justify-center my-28 sm:my-0 my-0">
+  <div class="container w-[75%] min-h-screen bg-gray-100 flex items-center justify-center my-28 sm:my-0">
     <div class="grid md:grid-cols-2 gap-6 items-start">
       <!-- Инструкция слева -->
       <div class="text-gray-800 space-y-4 text-sm leading-relaxed">
