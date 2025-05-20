@@ -19,8 +19,7 @@
         <div>
           <h2 class="font-bold text-lg">{{ client.fio }}</h2>
           <p class="text-sm text-gray-600">Телефон: {{ client.phone }}</p>
-          <p class="text-sm text-gray-600">Пароль: {{ client.password }}</p>
-          <p class="text-sm text-gray-600">Токен: <span class="break-all">{{ client.token }}</span></p>
+          <p class="text-sm text-gray-600">Пароль: *******</p>
           <p class="text-sm text-gray-600">
             Доступен до: {{ new Date(client.access_until).toLocaleString() }}
           </p>
