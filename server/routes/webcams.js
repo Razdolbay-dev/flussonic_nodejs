@@ -107,7 +107,6 @@ router.get('/private', requireAuth, async (req, res) => {
     }
 })
 
-// GET /webcams/public — публичные камеры с пагинацией и фильтрацией
 router.get('/public', async (req, res) => {
     const { address_id, page = 1, limit = 10 } = req.query
     const offset = (parseInt(page) - 1) * parseInt(limit)
@@ -307,7 +306,6 @@ router.put('/:id', async (req, res) => {
         connection.release()
     }
 })
-
 
 router.delete('/:id', async (req, res) => {
     const connection = await db.getConnection()

@@ -55,7 +55,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/store/auth.js'
-import { getWebcams } from '@/api/webcams.js'
+import { getPrivateWebcams } from '@/api/webcams.js'
 import { getCdnUrl } from '@/api/settings.js'
 
 const webcams = ref([])
@@ -79,24 +79,23 @@ const loadCdnUrl = async () => {
 
 // Загрузка камер
 const loadWebcams = async () => {
-  const params = {
-    page: currentPage.value,
-    limit: pageSize.value,
-  }
-  if (selectedAddressId.value) {
-    params.address_id = selectedAddressId.value
-  }
+  try {
+    const { token } = authStore
+    const { data } = await getPrivateWebcams(token)
 
-  const { data } = await getWebcams(params)
-  webcams.value = data.items.filter(cam => cam.role === 'private')
-  totalItems.value = webcams.value.length
+    webcams.value = data.items
+    totalItems.value = data.total
 
-  webcams.value.forEach((cam) => {
-    if (!(cam.uid in activeStreams.value)) {
-      activeStreams.value[cam.uid] = false
-    }
-  })
+    webcams.value.forEach((cam) => {
+      if (!(cam.uid in activeStreams.value)) {
+        activeStreams.value[cam.uid] = false
+      }
+    })
+  } catch (err) {
+    console.error('Ошибка при загрузке приватных камер:', err)
+  }
 }
+
 const getPreviewUrl = (uid) => {
   const token = authStore.token
   const base = `${cdnUrl.value}/${uid}/preview.jpg`
