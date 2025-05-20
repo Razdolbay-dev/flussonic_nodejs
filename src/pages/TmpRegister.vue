@@ -26,8 +26,8 @@
 
       <!-- Форма справа -->
       <form @submit.prevent="handleSubmit" class="space-y-4 border p-4 rounded-xl shadow bg-white">
-        <input v-model="form.fio" placeholder="ФИО" class="border p-2 w-full rounded" required />
-        <input v-model="form.phone" placeholder="Телефон" class="border p-2 w-full rounded" required />
+        <input v-model="form.fio" placeholder="ФИО" class="border p-2 w-full rounded" required/>
+        <input v-model="form.phone" placeholder="Телефон" class="border p-2 w-full rounded" required/>
 
         <div class="border rounded p-3">
           <p class="font-semibold mb-2">Доступ к адресам</p>
@@ -83,54 +83,71 @@
       </form>
     </div>
     <transition name="fade">
+      <div v-if="verificationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md text-center shadow-lg">
+          <h2 class="text-xl font-bold mb-2">Подтвердите код</h2>
+          <p class="text-sm text-gray-600 mb-4">Введите 6-значный код, который вы получили по звонку</p>
+
+          <input
+              v-model="verificationCode"
+              maxlength="6"
+              class="border p-2 rounded w-full text-center text-lg mb-2"
+              placeholder="######"
+          />
+          <p v-if="verificationError" class="text-red-600 text-sm mb-2">{{ verificationError }}</p>
+
+          <button
+              @click="verifyCode"
+              class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+          >
+            Подтвердить
+          </button>
+        </div>
+      </div>
+    </transition>
+    <transition name="fade">
       <div
           v-if="successModal"
           class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
       >
         <div class="bg-white rounded-xl p-6 w-full max-w-md text-center shadow-lg">
-          <h2 class="text-xl font-bold mb-4">Регистрация успешна</h2>
-          <p class="text-lg mb-2">Ваш код доступа:</p>
-          <div class="text-2xl font-mono bg-gray-100 p-3 rounded mb-4 select-all">
+          <h2 class="text-xl font-bold mb-2">Регистрация завершена</h2>
+          <p class="text-gray-700 mb-4">
+            Ваш временный пароль для входа:
+          </p>
+
+          <div class="bg-gray-100 p-3 rounded text-lg font-mono tracking-wider select-all mb-4">
             {{ generatedPassword }}
           </div>
 
-          <div class="flex justify-center gap-4 mt-4">
-            <button
-                @click="copyToClipboard"
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
-              </svg>
-              Скопировать
-            </button>
+          <p class="text-sm text-gray-500 mb-4">
+            Обязательно сохраните пароль — восстановить его будет невозможно.
+          </p>
 
-            <button
-                @click="router.push('/login')"
-                class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition flex items-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle-fill" viewBox="0 0 16 16">
-                <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 1 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>
-              </svg>
-              Закрыть
-            </button>
-          </div>
-
+          <button
+              @click="successModal = false"
+              class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
+          >
+            Закрыть
+          </button>
         </div>
       </div>
     </transition>
-
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { getAddresses } from '@/api/addresses.js'
+import {ref, reactive, onMounted, computed} from 'vue'
+import {getAddresses} from '@/api/addresses.js'
 import axios from '@/api/axios.js'
-import { useRouter } from 'vue-router'
+import {useRouter} from 'vue-router'
 
 const router = useRouter()
-
+const verificationModal = ref(false)
+const verificationCode = ref('')
+const clientId = ref(null)
+const verificationError = ref('')
+const clientPhone = ref('') // ← сохраняем номер телефона
 
 const form = reactive({
   fio: '',
@@ -145,7 +162,7 @@ const successModal = ref(false)
 const generatedPassword = ref('')
 
 const loadAddresses = async () => {
-  const { data } = await getAddresses()
+  const {data} = await getAddresses()
   addresses.value = data
 }
 
@@ -184,20 +201,38 @@ const handleSubmit = async () => {
       access_days: accessDays.value
     })
 
-    generatedPassword.value = res.data.password
-    successModal.value = true
-
-    // Очистить форму (опционально)
-    form.fio = ''
-    form.phone = ''
-    form.address_ids = []
-    accessDays.value = 1
-
+    clientId.value = res.data.client_id // если нужен, пусть остаётся
+    clientPhone.value = form.phone      // сохраняем для отправки верификации
+    verificationModal.value = true
   } catch (err) {
     console.error(err)
     alert('Ошибка при регистрации')
   }
 }
+
+const verifyCode = async () => {
+  try {
+    const res = await axios.post('/auth/tmp-verify', {
+      phone: clientPhone.value,              // ← передаём phone
+      code: verificationCode.value           // ← передаём code
+    })
+
+    generatedPassword.value = res.data.password
+    verificationModal.value = false
+    successModal.value = true
+    verificationError.value = ''
+
+    // Очистка формы
+    form.fio = ''
+    form.phone = ''
+    form.address_ids = []
+    accessDays.value = 1
+  } catch (err) {
+    console.error(err)
+    verificationError.value = 'Код введён неверно. Попробуйте ещё раз.'
+  }
+}
+
 
 const copyToClipboard = () => {
   navigator.clipboard.writeText(generatedPassword.value)
