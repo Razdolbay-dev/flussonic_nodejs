@@ -92,8 +92,10 @@ CREATE TABLE `clients_tmp` (
   `access_until` datetime DEFAULT NULL,
   `created` datetime DEFAULT current_timestamp(),
   `role` enum('user') NOT NULL DEFAULT 'user',
+  `verification_code` varchar(6) DEFAULT NULL,
+  `is_verified` tinyint(1) DEFAULT 0,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -103,7 +105,8 @@ CREATE TABLE `clients_tmp` (
 LOCK TABLES `clients_tmp` WRITE;
 /*!40000 ALTER TABLE `clients_tmp` DISABLE KEYS */;
 INSERT INTO `clients_tmp` VALUES
-(1,'1 2 3','+79992558595','$2b$10$Ib460/V/mL1tgh0NGh6c5O2veWzKWoWoZ9PdYRjGZl1mcrw63MgQ6','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwicGhvbmUiOiIrNzk5OTI1NTg1OTUiLCJyb2xlIjoidXNlciIsIm9yaWdpbiI6InRlbXAiLCJpYXQiOjE3NDcyOTg4ODgsImV4cCI6MTc0NzMwMjQ4OH0.FI5cNVTnd8v3AwNxTJ8mk5GlTExE4p1kVOKwSBQQTSM','2025-05-22 08:47:21','2025-05-15 11:47:21','user');
+(4,'Чулков Павел Анатольевич','+79215278490','$2b$10$5P1otaHSuk9PG6FF4lVBgO2yBPAAdahqtoO4jtFXYSPO2uaYA0FYW','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwicGhvbmUiOiIrNzkyMTUyNzg0OTAiLCJyb2xlIjoidXNlciIsIm9yaWdpbiI6InRlbXAiLCJpYXQiOjE3NDc3NDU1MDMsImV4cCI6MTc0Nzc0OTEwM30.voly-2NQ-95QShkO9Xs_jjzdmbk7Q6CHlQtZTE7IROI','2025-05-21 12:50:57','2025-05-20 15:50:57','user',NULL,1),
+(6,'Захаров Анатолий Геннадьевич','+79114203385','$2b$10$ibrQWpxGgV3rRhKtSWS9K.AJhXs.rEK0FSsUZhMIZPAu5uR36aNK2','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NiwicGhvbmUiOiIrNzkxMTQyMDMzODUiLCJyb2xlIjoidXNlciIsIm9yaWdpbiI6InRlbXAiLCJpYXQiOjE3NDc3NDc1NTksImV4cCI6MTc0Nzc1MTE1OX0.7lM2U8HcAEh0H7OIq6d81qe17hEPZDRbjxr9BL00iQQ','2025-05-21 13:25:28','2025-05-20 16:25:28','user',NULL,1);
 /*!40000 ALTER TABLE `clients_tmp` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -123,7 +126,7 @@ CREATE TABLE `clients_tmp_addresses` (
   KEY `address_id` (`address_id`),
   CONSTRAINT `clients_tmp_addresses_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `clients_tmp` (`id`) ON DELETE CASCADE,
   CONSTRAINT `clients_tmp_addresses_ibfk_2` FOREIGN KEY (`address_id`) REFERENCES `addresses` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -133,9 +136,12 @@ CREATE TABLE `clients_tmp_addresses` (
 LOCK TABLES `clients_tmp_addresses` WRITE;
 /*!40000 ALTER TABLE `clients_tmp_addresses` DISABLE KEYS */;
 INSERT INTO `clients_tmp_addresses` VALUES
-(1,1,10),
-(2,1,11),
-(3,1,13);
+(25,4,1),
+(26,4,3),
+(27,4,5),
+(34,6,11),
+(35,6,16),
+(36,6,18);
 /*!40000 ALTER TABLE `clients_tmp_addresses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -216,7 +222,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `token` (`token`),
   KEY `address_id` (`address_id`),
   CONSTRAINT `users_ibfk_1` FOREIGN KEY (`address_id`) REFERENCES `addresses` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -226,7 +232,27 @@ CREATE TABLE `users` (
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
 INSERT INTO `users` VALUES
-(1,'admin','$2b$10$KKdSqzv4YARD6AfifoYTuOahBz8W.kPXGZZioxy7Fyh.LgyJkzEA.','127.0.0.1','2025-05-15 10:51:43',1,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwib3JpZ2luIjoicGVybSIsImlhdCI6MTc0NzM4OTg3MSwiZXhwIjoxNzQ3MzkzNDcxfQ.qJx37QL2Q4ZMObohbJShNFlT7n5Xuka9ZihS9CBXxec','admin');
+(1,'razdolbay','$2b$10$cjTem2mHD6vJJ099gVRk.OtS055j8x0red68Z27dtNG414kXO27Cy','127.0.0.1','2025-05-15 10:51:43',1,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6InJhemRvbGJheSIsInJvbGUiOiJhZG1pbiIsIm9yaWdpbiI6InBlcm0iLCJpYXQiOjE3NDc3NDUxMjYsImV4cCI6MTc0Nzc0ODcyNn0.xAfUZlUItXDICC2_KJxZGZyUnnkGcGxSzKvZJaScjyQ','admin'),
+(2,'user_victory_8','$2b$10$lDxlRbUUCcaD8Gb6Pz3yruIQGvQUYQC72JVZPRH6HDH7tRl.xQ1La','127.0.0.1','2025-05-20 14:23:09',11,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwibmFtZSI6InVzZXJfdmljdG9yeSIsInJvbGUiOiJ1c2VyIiwib3JpZ2luIjoicGVybSIsImlhdCI6MTc0Nzc0MDM5NCwiZXhwIjoxNzQ3NzQzOTk0fQ.bVmwNNq6VjVXBHeIbS9G1iBm9MmCDR_5u_7qd1MR5lY','user'),
+(3,'user_victory_1','$2b$10$.84FZ3/.ZZqQ86dt6X7F8.mW2rvAnS1s/UAgE/ffNfJqgQ7dDZ9IK','127.0.0.1','2025-05-20 14:54:18',8,'6tvig07en37mawghux9','user'),
+(4,'user_victory_4','$2b$10$F1lZGJLNu6lBNTT1Pp103OEDCAyUjrvpOS0dHKBRvVBG1XnrgkHxm','195.62.78.4','2025-05-20 14:54:57',9,'o1lcqxmdlcmawgiox9','user'),
+(5,'user_victory_11','$2b$10$OvsJs5/e.LaC9oQT9Z50HeMPd4WzSHlVusu.kOogmRdPpvt9Vx9Y.','195.62.78.11','2025-05-20 14:56:23',13,'mzdrlarhuosmawgkiw5','user'),
+(6,'user_victory_9','$2b$10$9rlxLL.71ECNXZE91kn13OmOKDYfhJqSPW.WIQ2X/RYkL.DN8A/1O','195.62.78.9','2025-05-20 14:56:50',12,'f2iv6s1jdjamawgkwny','user'),
+(7,'user_victory_5','$2b$10$sPzw/b6yxVtV/41.8x5BCej2.ns7sp735To.Bwu.J8td4CrMzTb5i','195.62.78.5','2025-05-20 14:57:24',10,'pqcfqjl9gpmawglb32','user'),
+(8,'user_privokzlnaya_15','$2b$10$kGD7wiAq0uKI/EavkFTaAeQ7jNssZ6tR6nqhfZuMBKRG0VfvyVFFq','127.0.0.1','2025-05-20 14:58:47',14,'vg93zhn3lvnmawgnfku','user'),
+(9,'user_privokzlnaya_17','$2b$10$xJyZa2V0fMpXg//83RibN.ue6cZ3kvCM25Odsxd29iMeTl0PlpWVi','127.0.0.1','2025-05-20 14:59:13',15,'0xzhn5tqm1rgmawgnzae','user'),
+(10,'user_pushkina_6','$2b$10$Zv7NlKzlIr0MnG.erXyGieGkao3ziFXPub4p2/KtzMs6mglKkbOB.','127.0.0.1','2025-05-20 14:59:38',16,'d77tduoyz0lmawgogjz','user'),
+(11,'user_rudakova_1','$2b$10$zF7TNGbcAU/U.OhD3mynne.SvqZQo8QM6osmpO.PeKHCD8JV17a36','127.0.0.1','2025-05-20 15:00:05',17,'8imxg9gmd5lmawgp1sm','user'),
+(12,'user_rudakova_12','$2b$10$NXVz7eSrz1LKHOIbzK4dw.a8T2OdMMtKicT8wWrrc9Q4qs.KbiLs.','127.0.0.1','2025-05-20 15:00:28',18,'nlnvtltifqcmawgpmw5','user'),
+(13,'user_rudakova_6','$2b$10$kLFb6QGQb23iq1kgP.uLXesjPWTlnCVknwcBadeFexGGyO/KiDQaC','127.0.0.1','2025-05-20 15:01:03',20,'l2gyqtnr4uemawgq6j7','user'),
+(14,'user_titova_4','$2b$10$lA.u0ET7ZtmL.Yo4VKzxHe42h2MkKFoAOgea/PKvmMBNj.KCINEEi','127.0.0.1','2025-05-20 15:01:47',21,'nwsv299uzxgmawgr6y2','user'),
+(15,'user_titova_5','$2b$10$rwROqZ5qLRQYiEH5u2t9FOcVCYN8CMcNUpd5Uh88Zs2immnuWFJ2G','127.0.0.1','2025-05-20 15:02:13',22,'g2k1vp1qfxbmawgrm09','user'),
+(16,'user_gorykogo_9','$2b$10$zNZBe360sknZPsbLlnjJlej/8wHWHMdGkGFY7Er3y2LI69077tu.a','127.0.0.1','2025-05-20 15:03:17',4,'wfxbeic3wxmawgt4rz','user'),
+(17,'user_ lenina_27','$2b$10$NBToce.RIrqp8EmKrgYpteOEWbTrnAY8J6L2J9M69kmAlqNziad2K','127.0.0.1','2025-05-20 15:03:48',7,'rxp1ejg9yuamawgtodq','user'),
+(18,'user_lenina_19','$2b$10$1A9YrhjVRwY3Q/It2aZL4e9ptBFK95gBbIXIiDN91Jrqw0WWPs2/e','127.0.0.1','2025-05-20 15:04:16',15,'tfknhv8h7zmawgufot','user'),
+(19,'user_gorykogo_36','$2b$10$PhaZUEZD902x9gkb1K61u.KkgxIAk3ve/VF7PKAwoqiJklmOeeJre','127.0.0.1','2025-05-20 15:04:57',3,'sm5ihn5ojp9mawgvb64','user'),
+(20,'user_goglya_7','$2b$10$.c6ROJD8us8NOqCbAyVjiempp31BuaihcvvDfXDX4q3e7ElENchNa','127.0.0.1','2025-05-20 15:05:20',2,'f4cl4dq4b3umawgvseb','user'),
+(21,'user_test','$2b$10$fhSFWiUdgvERM3Sn2JFRvuH5PJKAPKZCO3FKIW1PToki03sWPsJBW','127.0.0.12','2025-05-20 15:23:17',4,'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjEsIm5hbWUiOiJ1c2VyX3Rlc3QiLCJyb2xlIjoidXNlciIsIm9yaWdpbiI6InBlcm0iLCJpYXQiOjE3NDc3NDM4OTEsImV4cCI6MTc0Nzc0NzQ5MX0.vZ6i6E_u9a_igNyP4VrZbfBhSBJ44VZVex0BDExTUsY','user');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -346,4 +372,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-05-16 13:15:45
+-- Dump completed on 2025-05-20 16:36:53
