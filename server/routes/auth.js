@@ -19,6 +19,34 @@ function generateToken() {
     return crypto.randomBytes(16).toString('hex'); // 32 символа
 }
 
+router.get('/ipverify', async (req, res) => {
+    const rawIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const clientIP = rawIP?.split(',')[0]?.trim();
+
+    try {
+        const [rows] = await db.query('SELECT * FROM addresses WHERE address_ip = ?', [clientIP]);
+        const address = rows[0];
+
+        if (!address) {
+            return res.status(404).json({ message: 'На вашем IP нет доступа к камерам' });
+        }
+
+        const token = jwt.sign(
+            { address_id: address.id },
+            process.env.TOKEN_SECRET_KEY,
+            { expiresIn: '1h' }
+        );
+
+        res.json({
+            token,
+            address: `${address.street} ${address.house_number}`,
+        });
+    } catch (err) {
+        console.error('Ошибка IP-входа:', err);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
+
 router.get('/auto-login', async (req, res) => {
     const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     console.log(clientIP);

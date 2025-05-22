@@ -7,6 +7,7 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 
 import Home from '@/pages/default/Home.vue'
 import About from '@/pages/default/About.vue'
+import IPTokenCam from '@/pages/default/YardIP.vue'
 import LoginView from '@/pages/Login.vue'
 import AllWebCams from '@/pages/default/AllWebCams.vue'
 import Yard from '@/pages/default/Yard.vue'
@@ -36,7 +37,8 @@ const routes = [
             { path: 'webcams/:id', name: 'WebcamDetail', component: WebcamDetail },
             { path: 'login', component: LoginView },
             { path: 'register', name: 'TmpRegister', component: TmpRegister },
-            { path: 'jwt', component: JwtViewer }
+            { path: 'jwt', component: JwtViewer },
+            { path: 'ipcam', component: IPTokenCam }
         ],
     },
     {

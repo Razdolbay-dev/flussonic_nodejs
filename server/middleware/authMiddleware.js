@@ -51,3 +51,15 @@ export const protectStrict = (req, res, next) => {
         return res.status(401).json({ message: 'Неверный токен' })
     }
 }
+
+export const authenticate = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.sendStatus(401);
+
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.TOKEN_SECRET_KEY, (err, payload) => {
+        if (err) return res.sendStatus(403);
+        req.address_id = payload.address_id;
+        next();
+    });
+};

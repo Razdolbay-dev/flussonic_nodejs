@@ -3,9 +3,27 @@ import {db} from '../config/db.js'
 import {getFlussonicSettings} from '../config/getFlussonicSettings.js'
 import axios from 'axios'
 import {requireAuth} from '../middleware/requireAuth.js'
-import { protectStrict } from '../middleware/authMiddleware.js';
+import { protectStrict, authenticate} from '../middleware/authMiddleware.js';
 
 const router = express.Router()
+
+router.get('/available', authenticate, async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT id, uid, name FROM webcam WHERE address_id = ? AND role = "private"',
+            [req.address_id]
+        );
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Извините, на вашем доме нет камер' });
+        }
+
+        res.json({ cameras: rows });
+    } catch (err) {
+        console.error('Ошибка получения камер:', err);
+        res.status(500).json({ message: 'Ошибка сервера' });
+    }
+});
 
 router.get('/', protectStrict, async (req, res) => {
     const {address_id, page = 1, limit = 10} = req.query
