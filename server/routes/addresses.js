@@ -1,10 +1,11 @@
 import express from 'express';
 import { db } from '../config/db.js';
+import { protectStrict } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Получить все адреса
-router.get('/', async (req, res) => {
+router.get('/', protectStrict, async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM addresses');
         res.json(rows);
@@ -30,17 +31,17 @@ router.get('/:id', async (req, res) => {
 
 // Добавить новый адрес
 router.post('/', async (req, res) => {
-    const { city, street, house_number } = req.body;
+    const { city, street, house_number, address_ip } = req.body;
     if (!city || !street || !house_number) {
         return res.status(400).json({ error: 'Все поля обязательны' });
     }
 
     try {
         const [result] = await db.query(
-            'INSERT INTO addresses (city, street, house_number) VALUES (?, ?, ?)',
-            [city, street, house_number]
+            'INSERT INTO addresses (city, street, house_number, address_ip) VALUES (?, ?, ?, ?)',
+            [city, street, house_number, address_ip || null]
         );
-        res.status(201).json({ id: result.insertId, city, street, house_number });
+        res.status(201).json({ id: result.insertId, city, street, house_number, address_ip });
     } catch (error) {
         console.error('Ошибка при добавлении адреса:', error);
         res.status(500).json({ error: 'Ошибка сервера' });
@@ -49,12 +50,12 @@ router.post('/', async (req, res) => {
 
 // Обновить адрес
 router.put('/:id', async (req, res) => {
-    const { city, street, house_number } = req.body;
+    const { city, street, house_number, address_ip } = req.body;
 
     try {
         const [result] = await db.query(
-            'UPDATE addresses SET city = ?, street = ?, house_number = ? WHERE id = ?',
-            [city, street, house_number, req.params.id]
+            'UPDATE addresses SET city = ?, street = ?, house_number = ?, address_ip = ? WHERE id = ?',
+            [city, street, house_number, address_ip || null, req.params.id]
         );
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Адрес не найден' });

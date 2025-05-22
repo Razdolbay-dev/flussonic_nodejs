@@ -3,10 +3,11 @@ import {db} from '../config/db.js'
 import {getFlussonicSettings} from '../config/getFlussonicSettings.js'
 import axios from 'axios'
 import {requireAuth} from '../middleware/requireAuth.js'
+import { protectStrict } from '../middleware/authMiddleware.js';
 
 const router = express.Router()
 
-router.get('/', async (req, res) => {
+router.get('/', protectStrict, async (req, res) => {
     const {address_id, page = 1, limit = 10} = req.query
     const offset = (parseInt(page) - 1) * parseInt(limit)
     const params = []
@@ -53,59 +54,63 @@ router.get('/', async (req, res) => {
 
 router.get('/private', requireAuth, async (req, res) => {
     try {
-        const {id: userId, origin} = req.user
+        const { id: userId, origin } = req.user;
 
-        console.log(`Запрос камер от пользователя ID: ${userId}, источник: ${origin}`)
+        console.log(`Запрос камер от пользователя ID: ${userId}, источник: ${origin}`);
 
-        let addressIds = []
+        let addressIds = [];
 
         if (origin === 'temp') {
             const [rows] = await db.query(
                 'SELECT address_id FROM clients_tmp_addresses WHERE client_id = ?',
                 [userId]
-            )
-            addressIds = rows.map(row => row.address_id)
-            console.log('Адреса временного пользователя:', addressIds)
+            );
+            addressIds = rows.map(row => row.address_id);
+            console.log('Адреса временного пользователя:', addressIds);
         } else {
             const [rows] = await db.query(
                 'SELECT address_id FROM users WHERE id = ?',
                 [userId]
-            )
+            );
             if (!rows.length) {
-                console.warn('Пользователь не найден в таблице users:', userId)
-                return res.status(404).json({message: 'Пользователь не найден'})
+                console.warn('Пользователь не найден в таблице users:', userId);
+                return res.status(404).json({ message: 'Пользователь не найден' });
             }
-            addressIds = [rows[0].address_id]
-            console.log('Адрес постоянного пользователя:', addressIds)
+            addressIds = [rows[0].address_id];
+            console.log('Адрес постоянного пользователя:', addressIds);
         }
 
         if (!addressIds.length) {
-            console.warn('Нет доступных адресов для пользователя')
-            return res.json({items: [], total: 0})
+            console.warn('Нет доступных адресов для пользователя');
+            return res.json({ items: [], total: 0 });
         }
 
-        const [cams] = await db.query(`
-            SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
-            FROM webcam w
-                     LEFT JOIN dvr d ON w.dvr_id = d.id
-                     LEFT JOIN addresses a ON w.address_id = a.id
-            WHERE w.role = 'private'
-              AND w.address_id IN (?)
-            ORDER BY w.id DESC
-        `, [addressIds])
+        // MySQL не всегда корректно работает с ? для массива в IN, поэтому делаем так:
+        const placeholders = addressIds.map(() => '?').join(',');
 
-        console.log(`Найдено приватных камер: ${cams.length}`)
+        const [cams] = await db.query(
+            `
+      SELECT w.id, w.uid, w.name, w.role, a.city, a.street, a.house_number
+      FROM webcam w
+      LEFT JOIN addresses a ON w.address_id = a.id
+      WHERE w.role = 'private'
+        AND w.address_id IN (${placeholders})
+      ORDER BY w.id DESC
+      `,
+            addressIds
+        );
+
+        console.log(`Найдено приватных камер: ${cams.length}`);
 
         res.json({
             items: cams,
             total: cams.length
-        })
-
+        });
     } catch (err) {
-        console.error('Ошибка при получении приватных камер:', err)
-        res.status(500).json({message: 'Ошибка сервера'})
+        console.error('Ошибка при получении приватных камер:', err);
+        res.status(500).json({ message: 'Ошибка сервера' });
     }
-})
+});
 
 router.get('/public', async (req, res) => {
     const { address_id, page = 1, limit = 10 } = req.query
@@ -120,13 +125,12 @@ router.get('/public', async (req, res) => {
 
     try {
         const sql = `
-            SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
+            SELECT w.id, w.uid, w.name, w.role, a.city, a.street, a.house_number
             FROM webcam w
-            LEFT JOIN dvr d ON w.dvr_id = d.id
-            LEFT JOIN addresses a ON w.address_id = a.id
-            ${whereClause}
+                     LEFT JOIN addresses a ON w.address_id = a.id
+                ${whereClause}
             ORDER BY w.id DESC
-            LIMIT ?
+                LIMIT ?
             OFFSET ?
         `
         params.push(parseInt(limit), offset)
@@ -134,12 +138,13 @@ router.get('/public', async (req, res) => {
         const countSql = `
             SELECT COUNT(*) AS total
             FROM webcam w
-            LEFT JOIN dvr d ON w.dvr_id = d.id
-            LEFT JOIN addresses a ON w.address_id = a.id
-            ${whereClause}
+                ${whereClause}
         `
 
-        const [[countRow]] = await db.query(countSql, address_id ? [address_id] : [])
+        // Для подсчёта параметров передаём только те, что относятся к whereClause
+        const countParams = address_id ? [address_id] : []
+
+        const [[countRow]] = await db.query(countSql, countParams)
         const [cams] = await db.query(sql, params)
 
         res.json({

@@ -20,7 +20,9 @@
             <input v-model="form.city" placeholder="Город" class="border p-2 w-full rounded-xl" />
             <input v-model="form.street" placeholder="Улица" class="border p-2 w-full rounded-xl" />
             <input v-model="form.house_number" placeholder="Дом" class="border p-2 w-full rounded-xl" />
+            <input v-model="form.address_ip" placeholder="IP адрес" class="border p-2 w-full rounded-xl" />
           </form>
+
           <div class="flex justify-end gap-2">
             <button @click="handleAdd" class="bg-blue-600 text-white px-4 py-2 rounded-xl">Добавить</button>
             <button @click="closeModal" class="bg-gray-400 text-white px-4 py-2 rounded-xl">Отмена</button>
@@ -71,21 +73,21 @@
           :key="address.id"
           class="bg-white p-4 shadow rounded"
       >
-        <template v-if="editingId === address.id">
           <!-- Форма редактирования -->
-          <div class="space-y-2">
-            <input v-model="editForm.city" class="border p-1 w-full rounded"/>
-            <input v-model="editForm.street" class="border p-1 w-full rounded"/>
-            <input v-model="editForm.house_number" class="border p-1 w-full rounded"/>
-            <div class="flex gap-2">
-              <button @click="handleUpdate(address.id)" class="bg-green-600 text-white px-3 py-1 rounded">
-                Сохранить
-              </button>
-              <button @click="cancelEdit" class=" bg-red-600 text-white px-3 py-1 rounded hover:underline">Отмена</button>
+          <template v-if="editingId === address.id">
+            <div class="space-y-2">
+              <input v-model="editForm.city" class="border p-1 w-full rounded" />
+              <input v-model="editForm.street" class="border p-1 w-full rounded" />
+              <input v-model="editForm.house_number" class="border p-1 w-full rounded" />
+              <input v-model="editForm.address_ip" placeholder="IP адрес" class="border p-1 w-full rounded" />
+              <div class="flex gap-2">
+                <button @click="handleUpdate(address.id)" class="bg-green-600 text-white px-3 py-1 rounded">Сохранить</button>
+                <button @click="cancelEdit" class="bg-red-600 text-white px-3 py-1 rounded hover:underline">Отмена</button>
+              </div>
             </div>
-          </div>
-        </template>
-        <template v-else>
+          </template>
+
+          <template v-else>
           <div class="flex justify-between items-center">
             <span>{{ address.city }}, {{ address.street }}, {{ address.house_number }}</span>
             <div class="flex gap-2">
@@ -123,8 +125,8 @@ import {
 } from '@/api/addresses'
 
 const addresses = ref([])
-const form = ref({city: '', street: '', house_number: ''})
-const editForm = ref({city: '', street: '', house_number: ''})
+const form = ref({ city: '', street: '', house_number: '', address_ip: '' })
+const editForm = ref({ city: '', street: '', house_number: '', address_ip: '' })
 const editingId = ref(null)
 const search = ref('')
 const sortBy = ref('')
@@ -146,10 +148,10 @@ const openModal = () => {
   isModalOpen.value = true
 }
 
-// Закрыть модальное окно
+// Сброс формы при закрытии модалки
 const closeModal = () => {
   isModalOpen.value = false
-  form.value = { city: '', street: '', house_number: '' }
+  form.value = { city: '', street: '', house_number: '', address_ip: '' }
 }
 
 onMounted(() => {
@@ -191,12 +193,12 @@ const handleDelete = async (id) => {
 
 const startEdit = (address) => {
   editingId.value = address.id
-  editForm.value = {...address}
+  editForm.value = { ...address }
 }
 
 const cancelEdit = () => {
   editingId.value = null
-  editForm.value = {city: '', street: '', house_number: ''}
+  editForm.value = { city: '', street: '', house_number: '', address_ip: '' }
 }
 
 const handleUpdate = async (id) => {
