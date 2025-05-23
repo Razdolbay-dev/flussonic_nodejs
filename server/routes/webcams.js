@@ -1,41 +1,11 @@
-import express from 'express'
-import {db} from '../config/db.js'
-import {getFlussonicSettings, isCameraActive} from '../config/getFlussonicSettings.js'
-import axios from 'axios'
-import {requireAuth, requireAuthCustom} from '../middleware/requireAuth.js'
+import express from 'express';
+import {db} from '../config/db.js';
+import {getFlussonicSettings, isCameraActive} from '../config/getFlussonicSettings.js';
+import axios from 'axios';
+import {requireAuth, requireAuthCustom} from '../middleware/requireAuth.js';
 import { protectStrict, authenticate} from '../middleware/authMiddleware.js';
 
 const router = express.Router()
-
-router.get('/available', authenticate, async (req, res) => {
-    try {
-        const [rows] = await db.query(
-            'SELECT w.id, w.uid, w.name, a.city, a.street, a.house_number FROM webcam w LEFT JOIN addresses a ON w.address_id = a.id WHERE address_id = ? AND role = "private"',
-            [req.address_id]
-        )
-
-        if (rows.length === 0) {
-            return res.status(404).json({ message: 'Извините, на вашем доме нет камер' })
-        }
-
-        // Проверяем каждую камеру на активность
-        const checkedCams = await Promise.all(rows.map(async cam => {
-            const active = await isCameraActive(cam.uid)
-            return active ? cam : null
-        }))
-
-        const availableCams = checkedCams.filter(Boolean)
-
-        if (availableCams.length === 0) {
-            return res.status(404).json({ message: 'Нет доступных камер на данный момент' })
-        }
-
-        res.json({ cameras: availableCams })
-    } catch (err) {
-        console.error('Ошибка получения камер:', err)
-        res.status(500).json({ message: 'Ошибка сервера' })
-    }
-})
 
 router.get('/', protectStrict, async (req, res) => {
     const {address_id, page = 1, limit = 10} = req.query
@@ -80,7 +50,7 @@ router.get('/', protectStrict, async (req, res) => {
         console.error('Ошибка при получении камер с пагинацией:', err)
         res.status(500).json({error: 'Ошибка сервера'})
     }
-})
+});
 
 router.get('/all', requireAuthCustom, async (req, res) => {
     const {address_id, page = 1, limit = 10} = req.query
@@ -124,7 +94,7 @@ router.get('/all', requireAuthCustom, async (req, res) => {
         console.error('Ошибка при получении камер с пагинацией:', err)
         res.status(500).json({error: 'Ошибка сервера'})
     }
-})
+});
 
 router.get('/cam/:id', async (req, res) => {
     try {
@@ -251,6 +221,36 @@ router.get('/public', async (req, res) => {
     }
 });
 
+router.get('/available', authenticate, async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            'SELECT w.id, w.uid, w.name, a.city, a.street, a.house_number FROM webcam w LEFT JOIN addresses a ON w.address_id = a.id WHERE address_id = ? AND role = "private"',
+            [req.address_id]
+        )
+
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Извините, на вашем доме нет камер' })
+        }
+
+        // Проверяем каждую камеру на активность
+        const checkedCams = await Promise.all(rows.map(async cam => {
+            const active = await isCameraActive(cam.uid)
+            return active ? cam : null
+        }))
+
+        const availableCams = checkedCams.filter(Boolean)
+
+        if (availableCams.length === 0) {
+            return res.status(404).json({ message: 'Нет доступных камер на данный момент' })
+        }
+
+        res.json({ cameras: availableCams })
+    } catch (err) {
+        console.error('Ошибка получения камер:', err)
+        res.status(500).json({ message: 'Ошибка сервера' })
+    }
+});
+
 router.get('/:id', protectStrict, async (req, res) => {
     try {
         const [rows] = await db.query(`
@@ -324,7 +324,7 @@ router.post('/', async (req, res) => {
     } finally {
         connection.release()
     }
-})
+});
 
 router.put('/:id', async (req, res) => {
     const { uid, name, url, dvr_id, address_id, role, day_count } = req.body
@@ -404,7 +404,7 @@ router.put('/:id', async (req, res) => {
     } finally {
         connection.release()
     }
-})
+});
 
 router.delete('/:id', async (req, res) => {
     const connection = await db.getConnection()
@@ -449,6 +449,6 @@ router.delete('/:id', async (req, res) => {
     } finally {
         connection.release()
     }
-})
+});
 
 export default router
