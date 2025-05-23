@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed} from 'vue'
 import { getCdnUrl } from '@/api/settings.js'
-import { getWebcams } from '@/api/webcams.js'
+import {getPrivateAll, getWebcams} from '@/api/webcams.js'
 import { useAuthStore } from "@/store/auth.js";
 
 const webcams = ref([])
