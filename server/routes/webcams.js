@@ -65,8 +65,9 @@ router.get('/all', requireAuthCustom, async (req, res) => {
 
     try {
         const sql = `
-            SELECT w.id, w.uid, w.name, a.city, a.street, a.house_number
+            SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number
             FROM webcam w
+                     LEFT JOIN dvr d ON w.dvr_id = d.id
                      LEFT JOIN addresses a ON w.address_id = a.id
                 ${whereClause}
             ORDER BY w.id DESC

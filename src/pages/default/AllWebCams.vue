@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed} from 'vue'
 import { getCdnUrl } from '@/api/settings.js'
-import { getPrivateAll } from '@/api/webcams.js'
+import { getWebcams } from '@/api/webcams.js'
 import { useAuthStore } from "@/store/auth.js";
 
 const webcams = ref([])
@@ -35,7 +35,7 @@ const loadWebcams = async () => {
     params.address_id = selectedAddressId.value
   }
 
-  const { data } = await getPrivateAll(params)
+  const { data } = await getWebcams(params)
   webcams.value = data.items
   totalItems.value = data.total
 
@@ -98,7 +98,7 @@ onMounted(() => {
           </router-link>
         </h2>
 
-        <div class="relative w-[320px] h-[240px] cursor-pointer" @click="toggleStream(cam.uid)">
+        <div class="relative w-[25%-320px] h-[240px] cursor-pointer" @click="toggleStream(cam.uid)">
           <!-- Превью с кнопкой Play -->
           <div v-if="!activeStreams[cam.uid]" class="relative">
             <img

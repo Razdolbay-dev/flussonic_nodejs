@@ -79,7 +79,7 @@ onMounted(() => {
           </router-link>
         </h2>
 
-        <div class="relative w-[320px] h-[240px] cursor-pointer" @click="toggleStream(cam.uid)">
+        <div class="relative w-[25%-320px] h-[240px] cursor-pointer" @click="toggleStream(cam.uid)">
           <!-- Превью с кнопкой Play -->
           <div v-if="!activeStreams[cam.uid]" class="relative">
             <img
