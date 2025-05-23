@@ -17,3 +17,28 @@ export const requireAuth = (req, res, next) => {
         return res.status(401).json({ message: 'Неверный токен' })
     }
 }
+
+export const requireAuthCustom = (req, res, next) => {
+    const authHeader = req.headers.authorization
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Нет токена' })
+    }
+
+    const token = authHeader.split(' ')[1]
+
+
+    try {
+        const decoded = jwt.verify(token, process.env.TOKEN_SECRET_KEY)
+
+        if (decoded.role === ['admin' || 'customUser' || 'moderator']) {
+            return res.status(403).json({ message: 'Доступ запрещён: недостаточно прав' })
+        }
+
+        req.user = decoded
+        next()
+    } catch (err) {
+        return res.status(401).json({ message: 'Неверный токен' })
+    }
+
+}

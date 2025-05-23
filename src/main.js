@@ -3,8 +3,22 @@ import App from './App.vue'
 import router from './router'
 import pinia from './store'
 import './index.css'
-import axios from '@/api/axios'
-import { useAuthStore } from '@/store/auth'
+
+// ✅ Очистка временного токена, если он устарел
+function clearExpiredTempToken() {
+    const savedAt = localStorage.getItem('temp_token_timestamp')
+    const oneHour = 60 * 60 * 1000
+
+    if (savedAt && Date.now() - parseInt(savedAt, 10) > oneHour) {
+        localStorage.removeItem('temp_token')
+        localStorage.removeItem('temp_token_timestamp')
+        localStorage.removeItem('auth')
+        console.log('⏳ Временный токен очищен из localStorage (по истечению срока)')
+    }
+}
+
+// Выполнить до запуска приложения
+clearExpiredTempToken()
 
 const app = createApp(App)
 
@@ -15,24 +29,5 @@ const runApp = () => {
     app.mount('#app')
 }
 
-const autoLoginTried = sessionStorage.getItem('autoLoginTried')
+runApp()
 
-if (!autoLoginTried) {
-    // Здесь уже pinia подключён, можно вызывать useAuthStore
-    const authStore = useAuthStore()
-
-    axios.get('/auth/auto-login')
-        .then(res => {
-            if (res.data.token && res.data.role) {
-                authStore.setAuth(res.data.token, res.data.role)
-            }
-        })
-        .catch(() => { /* IP не найден — просто игнорируем */ })
-
-        .finally(() => {
-            sessionStorage.setItem('autoLoginTried', '1')
-            runApp()
-        })
-} else {
-    runApp()
-}

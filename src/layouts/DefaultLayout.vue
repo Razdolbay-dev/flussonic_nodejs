@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useAuthStore } from '@/store/auth'
 
 const store = useAuthStore()
@@ -8,16 +8,25 @@ const isOpen = ref(false)
 const toggleMenu = () => {
   isOpen.value = !isOpen.value
 }
-
-// Функция для закрытия меню
 const closeMenu = () => {
   isOpen.value = false
 }
-
 function logout() {
   store.logout()
 }
+
+// ⬇️ Распознавание ролей
+const isUser = computed(() => store.role === 'user')
+const isCustomUser = computed(() => store.role === 'customUser')
+const isPrivileged = computed(() => ['admin', 'moderator'].includes(store.role))
+const isLoggedIn = computed(() => !!store.token)
+const showGuestYardLink = computed(() => {
+  return !store.isAuthenticated
+})
+
+
 </script>
+
 
 
 <template>
@@ -45,12 +54,20 @@ function logout() {
 
         <!-- ПК-версия -->
         <div class="hidden md:flex space-x-6">
-          <router-link class="py-2 hover:text-blue-600 hover:underline" to="/">Публичные</router-link>
-          <router-link v-if="store.token && store.role === 'user'" class="py-2 hover:text-blue-500 hover:underline" to="/yard">Дворовые</router-link>
-          <router-link v-if="store.token && store.role !== 'user'" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/allcams">Все камеры</router-link>
-          <router-link v-if="store.token && store.role !== 'user'" class="py-2 hover:text-blue-500 hover:underline" to="/admin">Управление</router-link>
-          <router-link v-if="!store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
-          <button v-if="store.token" @click="logout" class="text-red-500 hover:bg-gray-200 rounded-md p-2">Выйти</button>
+          <router-link to="/" class="py-2 hover:text-blue-600 hover:underline">Публичные</router-link>
+          <router-link
+              v-if="showGuestYardLink"
+              to="/ipcam"
+              class="py-2 hover:text-blue-500 hover:underline"
+          >
+            Мой двор
+          </router-link>
+          <router-link v-if="isLoggedIn && isUser" to="/yard" class="py-2 hover:text-blue-500 hover:underline">Дворовые</router-link>
+          <router-link v-if="isLoggedIn && (isPrivileged || isCustomUser)" to="/allcams" class="py-2 hover:text-blue-500 hover:underline">Все камеры</router-link>
+          <router-link v-if="isLoggedIn && isPrivileged" to="/admin" class="py-2 hover:text-blue-500 hover:underline">Управление</router-link>
+          <router-link v-if="!isLoggedIn" to="/login" class="py-2 text-gray-700 hover:bg-gray-200 rounded-md">Вход</router-link>
+          <button v-if="isLoggedIn" @click="logout" class="text-red-500 hover:bg-gray-200 rounded-md p-2">Выйти</button>
+          <span></span>
         </div>
 
       </div>
@@ -58,14 +75,45 @@ function logout() {
       <!-- Мобильная версия -->
       <div v-if="isOpen" class="md:hidden mt-4 space-y-2 text-center bg-white rounded-md">
         <router-link @click="closeMenu" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/">Публичные</router-link>
-        <router-link @click="closeMenu" v-if="store.token && store.role === 'user'" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/yard">Дворовые</router-link>
-        <router-link @click="closeMenu" v-if="store.token && store.role !== 'user'" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/allcams">Все камеры</router-link>
-        <router-link @click="closeMenu" v-if="store.token && store.role !== 'user'" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/admin">Управление</router-link>
-        <router-link @click="closeMenu" v-if="!store.token" class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md" to="/login">Вход</router-link>
-        <router-link @click="closeMenu" v-if="store.token"  class="block py-1 text-gray-700 hover:bg-gray-200 rounded-md" to="#">
-          <button @click="logout" class="py-1 text-red-500 hover:underline">Выйти</button>
+        <router-link
+            v-if="showGuestYardLink"
+            @click="closeMenu"
+            to="/ipcam"
+            class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md"
+        >
+          Мой двор
         </router-link>
+        <router-link
+            @click="closeMenu"
+            v-if="isLoggedIn && isUser"
+            class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md"
+            to="/yard"
+        >Дворовые</router-link>
+        <router-link
+            @click="closeMenu"
+            v-if="isLoggedIn && (isPrivileged || isCustomUser)"
+            class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md"
+            to="/allcams"
+        >Все камеры</router-link>
+        <router-link
+            @click="closeMenu"
+            v-if="isLoggedIn && isPrivileged"
+            class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md"
+            to="/admin"
+        >Управление</router-link>
+        <router-link
+            @click="closeMenu"
+            v-if="!isLoggedIn"
+            class="block p-2 text-gray-700 hover:bg-gray-200 rounded-md"
+            to="/login"
+        >Вход</router-link>
+        <button
+            v-if="isLoggedIn"
+            @click="logout"
+            class="block w-full py-2 text-red-500 hover:bg-gray-200 rounded-md"
+        >Выйти</button>
       </div>
+
 
     </nav>
 

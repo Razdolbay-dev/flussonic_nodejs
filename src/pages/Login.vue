@@ -96,7 +96,7 @@ const loginByName = async () => {
 
     store.setAuth(res.data.token, res.data.role)
 
-    if (res.data.role !== 'user') {
+    if (res.data.role !== 'user' || 'customUser' ) {
       router.push('/admin')
     } else {
       router.push('/')

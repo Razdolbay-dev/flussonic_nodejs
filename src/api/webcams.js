@@ -7,7 +7,7 @@ export const getWebcams = (params) => axios.get(API_BASE, { params })
 export const createWebcam = (data) => axios.post(API_BASE, data)
 export const updateWebcam = (id, data) => axios.put(`${API_BASE}/${id}`, data)
 export const deleteWebcam = (id) => axios.delete(`${API_BASE}/${id}`)
-export const getWebcamById = (id) => axios.get(`${API_BASE}/${id}`) // ✅ добавлено
+export const getWebcam = (id) => axios.get(`${API_BASE}/cam/${id}`) // ✅ добавлено
 export const getPrivateWebcams = (token) => {
     return axios.get('/webcams/private', {
         headers: {
@@ -15,6 +15,13 @@ export const getPrivateWebcams = (token) => {
         }
     })
 }
+export const getPrivateAll = (token) => {
+    return axios.get(`${API_BASE}/all`, {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+}
 export const getPublicWebcams = (params) => {
-    return axios.get('/webcams/public', { params })
+    return axios.get(`${API_BASE}/public`, { params })
 }

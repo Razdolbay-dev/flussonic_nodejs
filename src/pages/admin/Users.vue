@@ -61,8 +61,10 @@
             <select v-model="form.role" class="border p-2 w-full rounded" required>
               <option disabled value="">Выберите роль</option>
               <option value="user">Обычный пользователь</option>
+              <option value="customUser">Особенный пользователь</option>
               <option value="moderator">Модератор</option>
               <option value="admin">Администратор</option>
+
             </select>
 
             <select v-model="form.address_id" class="border p-2 w-full rounded" required>

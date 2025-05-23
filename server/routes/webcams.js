@@ -1,8 +1,8 @@
 import express from 'express'
 import {db} from '../config/db.js'
-import {getFlussonicSettings} from '../config/getFlussonicSettings.js'
+import {getFlussonicSettings, isCameraActive} from '../config/getFlussonicSettings.js'
 import axios from 'axios'
-import {requireAuth} from '../middleware/requireAuth.js'
+import {requireAuth, requireAuthCustom} from '../middleware/requireAuth.js'
 import { protectStrict, authenticate} from '../middleware/authMiddleware.js';
 
 const router = express.Router()
@@ -10,20 +10,32 @@ const router = express.Router()
 router.get('/available', authenticate, async (req, res) => {
     try {
         const [rows] = await db.query(
-            'SELECT id, uid, name FROM webcam WHERE address_id = ? AND role = "private"',
+            'SELECT w.id, w.uid, w.name, a.city, a.street, a.house_number FROM webcam w LEFT JOIN addresses a ON w.address_id = a.id WHERE address_id = ? AND role = "private"',
             [req.address_id]
-        );
+        )
 
         if (rows.length === 0) {
-            return res.status(404).json({ message: 'Извините, на вашем доме нет камер' });
+            return res.status(404).json({ message: 'Извините, на вашем доме нет камер' })
         }
 
-        res.json({ cameras: rows });
+        // Проверяем каждую камеру на активность
+        const checkedCams = await Promise.all(rows.map(async cam => {
+            const active = await isCameraActive(cam.uid)
+            return active ? cam : null
+        }))
+
+        const availableCams = checkedCams.filter(Boolean)
+
+        if (availableCams.length === 0) {
+            return res.status(404).json({ message: 'Нет доступных камер на данный момент' })
+        }
+
+        res.json({ cameras: availableCams })
     } catch (err) {
-        console.error('Ошибка получения камер:', err);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('Ошибка получения камер:', err)
+        res.status(500).json({ message: 'Ошибка сервера' })
     }
-});
+})
 
 router.get('/', protectStrict, async (req, res) => {
     const {address_id, page = 1, limit = 10} = req.query
@@ -70,63 +82,123 @@ router.get('/', protectStrict, async (req, res) => {
     }
 })
 
+router.get('/all', requireAuthCustom, async (req, res) => {
+    const {address_id, page = 1, limit = 10} = req.query
+    const offset = (parseInt(page) - 1) * parseInt(limit)
+    const params = []
+    let whereClause = ''
+
+    if (address_id) {
+        whereClause = 'WHERE w.address_id = ?'
+        params.push(address_id)
+    }
+
+    try {
+        const sql = `
+            SELECT w.id, w.uid, w.name, a.city, a.street, a.house_number
+            FROM webcam w
+                     LEFT JOIN addresses a ON w.address_id = a.id
+                ${whereClause}
+            ORDER BY w.id DESC
+                LIMIT ?
+            OFFSET ?
+        `
+        params.push(parseInt(limit), offset)
+
+        const countSql = `
+            SELECT COUNT(*) as total
+            FROM webcam w
+                     LEFT JOIN dvr d ON w.dvr_id = d.id
+                     LEFT JOIN addresses a ON w.address_id = a.id
+                ${whereClause}
+        `
+
+        const [[countRow]] = await db.query(countSql, address_id ? [address_id] : [])
+        const [cams] = await db.query(sql, params)
+
+        res.json({
+            items: cams,
+            total: countRow.total
+        })
+    } catch (err) {
+        console.error('Ошибка при получении камер с пагинацией:', err)
+        res.status(500).json({error: 'Ошибка сервера'})
+    }
+})
+
+router.get('/cam/:id', async (req, res) => {
+    try {
+        const [rows] = await db.query(`
+            SELECT w.id, w.uid, w.name, a.city, a.street, a.house_number
+            FROM webcam w
+                     LEFT JOIN addresses a ON w.address_id = a.id
+            WHERE w.id = ?
+        `, [req.params.id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({error: 'Камера не найдена'});
+        }
+
+        res.json(rows[0]);
+    } catch (err) {
+        console.error('Ошибка при получении камеры:', err);
+        res.status(500).json({error: 'Ошибка сервера'});
+    }
+});
+
 router.get('/private', requireAuth, async (req, res) => {
     try {
-        const { id: userId, origin } = req.user;
-
-        console.log(`Запрос камер от пользователя ID: ${userId}, источник: ${origin}`);
-
-        let addressIds = [];
+        const { id: userId, origin } = req.user
+        let addressIds = []
 
         if (origin === 'temp') {
             const [rows] = await db.query(
                 'SELECT address_id FROM clients_tmp_addresses WHERE client_id = ?',
                 [userId]
-            );
-            addressIds = rows.map(row => row.address_id);
-            console.log('Адреса временного пользователя:', addressIds);
+            )
+            addressIds = rows.map(row => row.address_id)
         } else {
             const [rows] = await db.query(
                 'SELECT address_id FROM users WHERE id = ?',
                 [userId]
-            );
+            )
             if (!rows.length) {
-                console.warn('Пользователь не найден в таблице users:', userId);
-                return res.status(404).json({ message: 'Пользователь не найден' });
+                return res.status(404).json({ message: 'Пользователь не найден' })
             }
-            addressIds = [rows[0].address_id];
-            console.log('Адрес постоянного пользователя:', addressIds);
+            addressIds = [rows[0].address_id]
         }
 
         if (!addressIds.length) {
-            console.warn('Нет доступных адресов для пользователя');
-            return res.json({ items: [], total: 0 });
+            return res.json({ items: [], total: 0 })
         }
 
-        // MySQL не всегда корректно работает с ? для массива в IN, поэтому делаем так:
-        const placeholders = addressIds.map(() => '?').join(',');
+        const placeholders = addressIds.map(() => '?').join(',')
 
         const [cams] = await db.query(
             `
-      SELECT w.id, w.uid, w.name, w.role, a.city, a.street, a.house_number
-      FROM webcam w
-      LEFT JOIN addresses a ON w.address_id = a.id
-      WHERE w.role = 'private'
-        AND w.address_id IN (${placeholders})
-      ORDER BY w.id DESC
-      `,
+                SELECT w.id, w.uid, w.name, w.role, a.city, a.street, a.house_number
+                FROM webcam w
+                         LEFT JOIN addresses a ON w.address_id = a.id
+                WHERE w.role = 'private'
+                  AND w.address_id IN (${placeholders})
+                ORDER BY w.id DESC
+            `,
             addressIds
-        );
+        )
 
-        console.log(`Найдено приватных камер: ${cams.length}`);
+        const checkedCams = await Promise.all(
+            cams.map(async cam => (await isCameraActive(cam.uid) ? cam : null))
+        )
+
+        const filteredCams = checkedCams.filter(Boolean)
 
         res.json({
-            items: cams,
-            total: cams.length
-        });
+            items: filteredCams,
+            total: filteredCams.length
+        })
     } catch (err) {
-        console.error('Ошибка при получении приватных камер:', err);
-        res.status(500).json({ message: 'Ошибка сервера' });
+        console.error('Ошибка при получении приватных камер:', err)
+        res.status(500).json({ message: 'Ошибка сервера' })
     }
 });
 
@@ -158,24 +230,28 @@ router.get('/public', async (req, res) => {
             FROM webcam w
                 ${whereClause}
         `
-
-        // Для подсчёта параметров передаём только те, что относятся к whereClause
         const countParams = address_id ? [address_id] : []
 
         const [[countRow]] = await db.query(countSql, countParams)
         const [cams] = await db.query(sql, params)
 
+        const checkedCams = await Promise.all(
+            cams.map(async cam => (await isCameraActive(cam.uid) ? cam : null))
+        )
+
+        const filteredCams = checkedCams.filter(Boolean)
+
         res.json({
-            items: cams,
-            total: countRow.total
+            items: filteredCams,
+            total: filteredCams.length
         })
     } catch (err) {
         console.error('Ошибка при получении публичных камер:', err)
         res.status(500).json({ error: 'Ошибка сервера' })
     }
-})
+});
 
-router.get('/:id', async (req, res) => {
+router.get('/:id', protectStrict, async (req, res) => {
     try {
         const [rows] = await db.query(`
             SELECT w.*, d.name AS dvr_name, a.city, a.street, a.house_number

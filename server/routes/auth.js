@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { db } from '../config/db.js';
 import axios from 'axios';
-import crypto from 'crypto';
 
 const router = express.Router();
 
@@ -11,18 +10,12 @@ function generateTmpCode() {
     return Math.floor(100000 + Math.random() * 900000).toString(); // 6-значный код
 }
 
-function generatePassword() {
-    return Math.random().toString(36).slice(-8); // Пример простой генерации
-}
-
-function generateToken() {
-    return crypto.randomBytes(16).toString('hex'); // 32 символа
-}
-
 router.get('/ipverify', async (req, res) => {
     const rawIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const clientIP = rawIP?.split(',')[0]?.trim();
+    const user = 'temp';
 
+    console.log(`/ipverify : ${rawIP}`)
     try {
         const [rows] = await db.query('SELECT * FROM addresses WHERE address_ip = ?', [clientIP]);
         const address = rows[0];
@@ -32,15 +25,20 @@ router.get('/ipverify', async (req, res) => {
         }
 
         const token = jwt.sign(
-            { address_id: address.id },
+            {
+                address_id: address.id,
+                role: user,
+                origin: 'temp' // ✅ добавляем тип
+            },
             process.env.TOKEN_SECRET_KEY,
             { expiresIn: '1h' }
         );
-
         res.json({
             token,
             address: `${address.street} ${address.house_number}`,
+            role: user
         });
+
     } catch (err) {
         console.error('Ошибка IP-входа:', err);
         res.status(500).json({ message: 'Ошибка сервера' });
@@ -49,7 +47,8 @@ router.get('/ipverify', async (req, res) => {
 
 router.get('/auto-login', async (req, res) => {
     const clientIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    console.log(clientIP);
+    console.log(`/auto-login :\nclientIP ${clientIP}`)
+
 
     try {
         const [users] = await db.query('SELECT * FROM users WHERE ip = ?', [clientIP]);
@@ -97,6 +96,12 @@ router.post('/login', async (req, res) => {
             {expiresIn: '1h'}
         )
 
+        console.log(`
+                id: ${user.id},
+                name: ${user.name},
+                role: ${user.role},
+                token: ${token},
+        `)
 
         await db.query('UPDATE users SET token = ? WHERE id = ?', [token, user.id]);
 

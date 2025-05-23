@@ -12,7 +12,6 @@ import LoginView from '@/pages/Login.vue'
 import AllWebCams from '@/pages/default/AllWebCams.vue'
 import Yard from '@/pages/default/Yard.vue'
 
-
 import Dashboard from '@/pages/admin/Dashboard.vue'
 import Webcams from '@/pages/admin/Webcams.vue'
 import Addresses from '@/pages/admin/Addresses.vue'
@@ -70,20 +69,21 @@ router.beforeEach((to, from, next) => {
     const role = store.role
     const token = store.token
 
-    // Защищённые админ-маршруты
+    // Админ-доступ только для role === 'admin'
     if (to.meta.requiresAdmin) {
-        if (!token || role === 'user') {
+        if (!token || role !== ['admin', 'moderator']) {
             return next('/')
         }
     }
 
+    // Привилегированный доступ (например, админ + менеджер)
     if (to.meta.requiresPrivileged) {
-        if (!store.token || store.role === 'user') {
-            return next('/') // redirect на главную
+        if (!token || !['admin', 'moderator', 'customUser'].includes(role)) {
+            return next('/')
         }
     }
 
-    // Не пускаем на /login авторизованных
+    // Уже авторизован — не пускать на /login
     if (to.path === '/login' && token) {
         return next('/')
     }

@@ -21,7 +21,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { getWebcamById } from '@/api/webcams.js'
+import { getWebcam } from '@/api/webcams.js'
 import { getCdnUrl } from '@/api/settings.js'
 import { useAuthStore } from '@/store/auth.js'
 
@@ -32,13 +32,14 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
   const [{ data: webcamData }, { data: cdnData }] = await Promise.all([
-    getWebcamById(route.params.id),
+    getWebcam(route.params.id),
     getCdnUrl()
   ])
 
   webcam.value = webcamData
 
-  const token = authStore.token
+// ✅ Используем приоритет: авторизованный токен -> временный токен -> null
+  const token = authStore.token || localStorage.getItem('temp_token')
   const baseEmbedUrl = `${cdnData.cdnUrl}/${webcamData.uid}/embed.html`
 
   iframeSrc.value = token

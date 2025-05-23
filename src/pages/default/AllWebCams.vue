@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, computed} from 'vue'
 import { getCdnUrl } from '@/api/settings.js'
-import { getWebcams } from '@/api/webcams.js'
+import { getPrivateAll } from '@/api/webcams.js'
 import { useAuthStore } from "@/store/auth.js";
 
 const webcams = ref([])
@@ -35,7 +35,7 @@ const loadWebcams = async () => {
     params.address_id = selectedAddressId.value
   }
 
-  const { data } = await getWebcams(params)
+  const { data } = await getPrivateAll(params)
   webcams.value = data.items
   totalItems.value = data.total
 

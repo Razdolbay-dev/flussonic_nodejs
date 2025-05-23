@@ -6,7 +6,6 @@ const router = express.Router()
 
 router.get('/auth', (req, res) => {
     const { token } = req.query
-    console.log(token)
 
     if (!token) {
         return res.status(403).send('Missing token')
